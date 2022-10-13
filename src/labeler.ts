@@ -3,27 +3,16 @@ import * as github from "@actions/github";
 import * as yaml from "js-yaml";
 import { Minimatch, IMinimatch } from "minimatch";
 
-interface MatchConfig {
-  all?: string[];
-  any?: string[];
-}
+import * as helpers from "./helpers";
+import * as types from "./types";
 
-type StringOrMatchConfig = string | MatchConfig;
-type ClientType = ReturnType<typeof github.getOctokit>;
-
-export async function run() {
+export async function runLabeler(
+  client: types.ClientType,
+  configPath: string,
+  prNumber: number
+) {
   try {
-    const token = core.getInput("repo-token", { required: true });
-    const configPath = core.getInput("configuration-path", { required: true });
     const syncLabels = !!core.getInput("sync-labels", { required: false });
-
-    const prNumber = getPrNumber();
-    if (!prNumber) {
-      console.log("Could not get pull request number from context, exiting");
-      return;
-    }
-
-    const client: ClientType = github.getOctokit(token);
 
     const { data: pullRequest } = await client.rest.pulls.get({
       owner: github.context.repo.owner,
@@ -32,11 +21,13 @@ export async function run() {
     });
 
     core.debug(`fetching changed files for pr #${prNumber}`);
-    const changedFiles: string[] = await getChangedFiles(client, prNumber);
-    const labelGlobs: Map<string, StringOrMatchConfig[]> = await getLabelGlobs(
+    const changedFiles: string[] = await helpers.getChangedFiles(
       client,
-      configPath
+      prNumber
     );
+
+    const labelGlobs: Map<string, types.StringOrMatchConfig[]> =
+      await getLabelGlobs(client, configPath);
 
     const labels: string[] = [];
     const labelsToRemove: string[] = [];
@@ -62,75 +53,31 @@ export async function run() {
   }
 }
 
-function getPrNumber(): number | undefined {
-  const pullRequest = github.context.payload.pull_request;
-  if (!pullRequest) {
-    return undefined;
-  }
-
-  return pullRequest.number;
-}
-
-async function getChangedFiles(
-  client: ClientType,
-  prNumber: number
-): Promise<string[]> {
-  const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    pull_number: prNumber,
-  });
-
-  const listFilesResponse = await client.paginate(listFilesOptions);
-  const changedFiles = listFilesResponse.map((f: any) => f.filename);
-
-  core.info("found changed files:");
-  for (const file of changedFiles) {
-    core.info("  " + file);
-  }
-
-  return changedFiles;
-}
-
 async function getLabelGlobs(
-  client: ClientType,
+  client: types.ClientType,
   configurationPath: string
-): Promise<Map<string, StringOrMatchConfig[]>> {
-  const configurationContent: string = await fetchContent(
+): Promise<Map<string, types.StringOrMatchConfig[]>> {
+  const configurationContent: string = await helpers.fetchContent(
     client,
     configurationPath
   );
-  core.info(configurationContent);
+  core.debug(configurationContent);
 
-  // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
+  // loads (hopefully) a `{[label:string]: string | types.StringOrMatchConfig[]}`, but is `any`:
   const configObject: any = yaml.load(configurationContent);
 
   // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
   return getLabelGlobMapFromObject(configObject);
 }
 
-async function fetchContent(
-  client: ClientType,
-  repoPath: string
-): Promise<string> {
-  const response: any = await client.rest.repos.getContent({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    path: repoPath,
-    ref: github.context.sha,
-  });
-
-  return Buffer.from(response.data.content, response.data.encoding).toString();
-}
-
 function getLabelGlobMapFromObject(
   configObject: any
-): Map<string, StringOrMatchConfig[]> {
+): Map<string, types.StringOrMatchConfig[]> {
   const labelConfig = configObject["labels"];
 
   core.debug(labelConfig);
 
-  const labelGlobs: Map<string, StringOrMatchConfig[]> = new Map();
+  const labelGlobs: Map<string, types.StringOrMatchConfig[]> = new Map();
   for (const label in labelConfig) {
     if (typeof labelConfig[label] === "string") {
       labelGlobs.set(label, [labelConfig[label]]);
@@ -146,7 +93,7 @@ function getLabelGlobMapFromObject(
   return labelGlobs;
 }
 
-function toMatchConfig(config: StringOrMatchConfig): MatchConfig {
+function toMatchConfig(config: types.StringOrMatchConfig): types.MatchConfig {
   if (typeof config === "string") {
     return {
       any: [config],
@@ -162,7 +109,7 @@ function printPattern(matcher: IMinimatch): string {
 
 export function checkGlobs(
   changedFiles: string[],
-  globs: StringOrMatchConfig[]
+  globs: types.StringOrMatchConfig[]
 ): boolean {
   for (const glob of globs) {
     core.debug(` checking pattern ${JSON.stringify(glob)}`);
@@ -218,7 +165,10 @@ function checkAll(changedFiles: string[], globs: string[]): boolean {
   return true;
 }
 
-function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
+function checkMatch(
+  changedFiles: string[],
+  matchConfig: types.MatchConfig
+): boolean {
   if (matchConfig.all !== undefined) {
     if (!checkAll(changedFiles, matchConfig.all)) {
       return false;
@@ -235,7 +185,7 @@ function checkMatch(changedFiles: string[], matchConfig: MatchConfig): boolean {
 }
 
 async function addLabels(
-  client: ClientType,
+  client: types.ClientType,
   prNumber: number,
   labels: string[]
 ) {
@@ -248,7 +198,7 @@ async function addLabels(
 }
 
 async function removeLabels(
-  client: ClientType,
+  client: types.ClientType,
   prNumber: number,
   labels: string[]
 ) {

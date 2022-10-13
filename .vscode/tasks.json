@@ -18,6 +18,13 @@
 			],
 			"label": "npm: format",
 			"detail": "prettier --write \"**/*.ts\""
+		},
+		{
+			"type": "npm",
+			"script": "test",
+      "problemMatcher": [],
+      "label": "npm: tests",
+			"detail": "npm run test -- --silent=false"
 		}
 	]
 }

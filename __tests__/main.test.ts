@@ -1,4 +1,4 @@
-import { run } from "../src/label-and-assign";
+import { runLabeler } from "../src/labeler";
 import * as github from "@actions/github";
 import * as core from "@actions/core";
 
@@ -25,7 +25,7 @@ describe("run", () => {
     usingLabelerConfigYaml("only_pdfs.yml");
     mockGitHubResponseChangedFiles("foo.pdf");
 
-    await run();
+    await runLabeler(gh, "only_pdfs.yml", 123);
 
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
     expect(addLabelsMock).toHaveBeenCalledTimes(1);
@@ -41,7 +41,7 @@ describe("run", () => {
     usingLabelerConfigYaml("only_pdfs.yml");
     mockGitHubResponseChangedFiles("foo.txt");
 
-    await run();
+    await runLabeler(gh, "only_pdfs.yml", 123);
 
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
     expect(addLabelsMock).toHaveBeenCalledTimes(0);
@@ -66,7 +66,7 @@ describe("run", () => {
       },
     });
 
-    await run();
+    await runLabeler(gh, "only_pdfs.yml", 123);
 
     expect(addLabelsMock).toHaveBeenCalledTimes(0);
     expect(removeLabelMock).toHaveBeenCalledTimes(1);
@@ -97,7 +97,7 @@ describe("run", () => {
       },
     });
 
-    await run();
+    await runLabeler(gh, "only_pdfs.yml", 123);
 
     expect(addLabelsMock).toHaveBeenCalledTimes(0);
     expect(removeLabelMock).toHaveBeenCalledTimes(0);
