@@ -10,9 +10,8 @@ export async function runOwner(client: common.ClientType, prNumber: number) {
 
     const assignees = getAssigneeOrAssignees(context);
     if (assignees.length > 0) {
-      return core.setFailed(
-        `🚨 Assignee(s) already exist(s): [${assignees.join(", ")}]`
-      );
+      core.info(`🚨 Pull request is already assigned`);
+      return;
     }
 
     await client.rest.issues.addAssignees({

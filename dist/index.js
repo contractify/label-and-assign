@@ -77,7 +77,7 @@ function runAssigner(client, configPath) {
                 core.setFailed(assignedResult.message);
                 return;
             }
-            core.info(` 📄 ${assignedResult.message}`);
+            core.info(`📄 ${assignedResult.message}`);
             if (assignedResult.data) {
                 for (const reviewer of (_a = assignedResult.data) === null || _a === void 0 ? void 0 : _a.reviewers) {
                     core.info(` 📄 Assigning reviewer: ${reviewer}`);
@@ -798,7 +798,8 @@ function runOwner(client, prNumber) {
             const context = github === null || github === void 0 ? void 0 : github.context;
             const assignees = getAssigneeOrAssignees(context);
             if (assignees.length > 0) {
-                return core.setFailed(`🚨 Assignee(s) already exist(s): [${assignees.join(", ")}]`);
+                core.info(`🚨 Pull request is already assigned`);
+                return;
             }
             yield client.rest.issues.addAssignees({
                 owner: (_a = context === null || context === void 0 ? void 0 : context.repo) === null || _a === void 0 ? void 0 : _a.owner,
