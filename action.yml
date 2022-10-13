@@ -2,16 +2,12 @@ name: 'Label and Assign'
 description: 'Automatically label and assign new pull requests based on the paths of files being changed'
 author: 'GitHub'
 inputs:
-  repo-token:
+  token:
     description: 'The GITHUB_TOKEN secret'
   configuration-path:
     description: 'The path for the label and assignment configurations'
     default: '.github/label-and-assign.yml'
     required: false
-  # sync-labels:
-  #   description: 'Whether or not to remove labels when matching files are reverted'
-  #   default: false
-  #   required: false
 
 branding:
   icon: user
