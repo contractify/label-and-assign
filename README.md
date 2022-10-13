@@ -2,8 +2,6 @@
 
 Automatically label and assign new pull requests based on the paths of files being changed.
 
-🚨🚨🚨 WORK IN PROGRESS 🚨🚨🚨
-
 ## Usage
 
 ### Create `.github/label-and-assign.yml`
