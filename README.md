@@ -1,4 +1,4 @@
-# Pull Request Labeler
+# Pull Request Label and Assign
 
 Automatically label and assign new pull requests based on the paths of files being changed.
 
