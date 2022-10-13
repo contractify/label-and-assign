@@ -5,6 +5,7 @@ import * as common from "./common/common";
 import * as helpers from "./common/helpers";
 import { runLabeler } from "./labeler/labeler";
 import { runAssigner } from "./assigner/assigner";
+import { runOwner } from "./owner/owner";
 
 export async function run() {
   const prNumber = helpers.getPrNumber();
@@ -19,6 +20,7 @@ export async function run() {
 
   await runLabeler(client, configPath, prNumber);
   await runAssigner(client, configPath);
+  await runOwner(client);
 }
 
 run();
