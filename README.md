@@ -4,13 +4,52 @@ Automatically label and assign new pull requests based on the paths of files bei
 
 🚨🚨🚨 WORK IN PROGRESS 🚨🚨🚨
 
-<!--
 ## Usage
 
 ### Create `.github/label-and-assign.yml`
 
-Create a `.github/label-and-assign.yml` file with a list of labels and [minimatch](https://github.com/isaacs/minimatch) globs to match to apply the label.
+Create a `.github/label-and-assign.yml` file containing:
 
+labels:
+  dependencies:
+  - composer.json
+  - composer.lock
+  - package.json
+  - package-lock.json
+  - nova-components/ModuleSelector/package.json
+  - nova-components/ModuleSelector/package-lock.json
+
+  gihub_actions:
+  - '.github/**/*'
+
+  javascript:
+  - ./**/*.vue
+  - ./**/*.js
+
+  php:
+  - ./**/*.php
+
+assign:
+  dependencies:
+  - user1
+  - user2
+
+  gihub_actions:
+  - user1
+
+  php:
+  - user2
+  - user3
+
+  database:
+  - user2
+  - user3
+
+  javascript:
+  - user4
+
+
+<!--
 The key is the name of the label in your repository that you want to add (eg: "merge conflict", "needs-updating") and the value is the path (glob) of the changed files (eg: `src/**/*`, `tests/*.spec.js`) or a match object.
 
 #### Match Object

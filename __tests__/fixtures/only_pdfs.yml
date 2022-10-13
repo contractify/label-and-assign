@@ -1,2 +1,3 @@
-touched-a-pdf-file:
-  - any: ['*.pdf']
+labels2:
+  touched-a-pdf-file:
+    - any: ['*.pdf']

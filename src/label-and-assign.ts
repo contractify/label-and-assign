@@ -84,9 +84,9 @@ async function getChangedFiles(
   const listFilesResponse = await client.paginate(listFilesOptions);
   const changedFiles = listFilesResponse.map((f: any) => f.filename);
 
-  core.debug("found changed files:");
+  core.info("found changed files:");
   for (const file of changedFiles) {
-    core.debug("  " + file);
+    core.info("  " + file);
   }
 
   return changedFiles;
@@ -125,12 +125,14 @@ async function fetchContent(
 function getLabelGlobMapFromObject(
   configObject: any
 ): Map<string, StringOrMatchConfig[]> {
+  const labelConfig = configObject['labels'];
+
   const labelGlobs: Map<string, StringOrMatchConfig[]> = new Map();
-  for (const label in configObject) {
-    if (typeof configObject[label] === "string") {
-      labelGlobs.set(label, [configObject[label]]);
-    } else if (configObject[label] instanceof Array) {
-      labelGlobs.set(label, configObject[label]);
+  for (const label in labelConfig) {
+    if (typeof labelConfig[label] === "string") {
+      labelGlobs.set(label, [labelConfig[label]]);
+    } else if (labelConfig[label] instanceof Array) {
+      labelGlobs.set(label, labelConfig[label]);
     } else {
       throw Error(
         `found unexpected type for label ${label} (should be string or array of globs)`
