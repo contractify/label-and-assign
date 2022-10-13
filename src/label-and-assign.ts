@@ -100,6 +100,7 @@ async function getLabelGlobs(
     client,
     configurationPath
   );
+  core.info(configurationContent);
 
   // loads (hopefully) a `{[label:string]: string | StringOrMatchConfig[]}`, but is `any`:
   const configObject: any = yaml.load(configurationContent);
