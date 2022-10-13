@@ -4,62 +4,29 @@ import { Context } from "@actions/github/lib/context";
 
 import * as common from "../common/common";
 
-export async function runOwner(client: common.ClientType) {
+export async function runOwner(client: common.ClientType, prNumber: number) {
   try {
     const context: Context = github?.context;
 
-    if (!hasValidOwnerInContext(context)) {
-      return core.setFailed(`Valid owner is missing from context`);
-    }
-
-    if (!hasValidRepoInContext(context)) {
-      return core.setFailed(`Valid repo is missing from context`);
-    }
-
-    if (!hasValidPullRequestNumberInContext(context)) {
+    const assignees = getAssigneeOrAssignees(context);
+    if (assignees.length > 0) {
       return core.setFailed(
-        `Valid Pull Request number is missing from context`
+        `  🚨 Assignee(s) already exist(s): [${assignees.join(", ")}]`
       );
     }
 
-    if (hasAssigneeOrAssignees(context)) {
-      return core.setFailed(
-        `Assignee/s already exist/s: [${getAssigneeOrAssignees(context).join(
-          ", "
-        )}]`
-      );
-    }
-
-    const assignment = await client.rest.issues.addAssignees({
+    await client.rest.issues.addAssignees({
       owner: context?.repo?.owner,
       repo: context?.repo?.repo,
-      issue_number: Number(context?.payload?.pull_request?.number),
+      issue_number: prNumber,
       assignees: [context?.actor],
     });
 
-    core.info(
-      `${context?.actor} assigned to Pull Request #${context?.payload?.pull_request?.number} on ${context?.repo?.repo}`
-    );
+    core.info(`  📄 ${context?.actor} assigned`);
   } catch (error: any) {
-    core.error(error);
+    core.error(`  🚨 ${error}`);
     core.setFailed(error.message);
   }
-}
-
-function hasValidOwnerInContext(context: Context): boolean {
-  return !!context?.repo?.owner;
-}
-
-function hasValidRepoInContext(context: Context): boolean {
-  return !!context?.repo?.repo;
-}
-
-function hasValidPullRequestNumberInContext(context: Context): boolean {
-  return !!Number(context?.payload?.pull_request?.number);
-}
-
-function hasAssigneeOrAssignees(context: Context): boolean {
-  return getAssigneeOrAssignees(context)?.length > 0;
 }
 
 function getAssigneeOrAssignees(context: Context): string[] {
@@ -71,9 +38,5 @@ function getAssigneeOrAssignees(context: Context): string[] {
     assignees.push(assignee);
   });
 
-  if (assignees?.length > 0) {
-    return assignees;
-  }
-
-  return [];
+  return assignees?.length > 0 ? assignees : [];
 }

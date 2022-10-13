@@ -8,10 +8,10 @@ inputs:
     description: 'The path for the label and assignment configurations'
     default: '.github/label-and-assign.yml'
     required: false
-  sync-labels:
-    description: 'Whether or not to remove labels when matching files are reverted'
-    default: false
-    required: false
+  # sync-labels:
+  #   description: 'Whether or not to remove labels when matching files are reverted'
+  #   default: false
+  #   required: false
 
 branding:
   icon: user

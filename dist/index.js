@@ -46,9 +46,8 @@ const getYamlConfigAsync_1 = __nccwpck_require__(7919);
 const parseConfig_1 = __nccwpck_require__(5826);
 const getContextPullRequestDetails_1 = __nccwpck_require__(7236);
 const assignReviewersAsync_1 = __nccwpck_require__(3019);
-const unassignReviewersAsync_1 = __nccwpck_require__(5422);
 function runAssigner(client, configPath) {
-    var _a, _b;
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const unassignIfLabelRemoved = core.getInput("unassign-if-label-removed", {
@@ -78,29 +77,34 @@ function runAssigner(client, configPath) {
                 core.setFailed(assignedResult.message);
                 return;
             }
-            core.debug(`${assignedResult.status} - ${assignedResult.message}`);
-            if (unassignIfLabelRemoved) {
-                core.debug("Unassigning reviewers...");
-                const unassignedResult = yield (0, unassignReviewersAsync_1.unassignReviewersAsync)({
-                    client,
-                    contextDetails: {
-                        labels: contextDetails.labels,
-                        baseSha: contextDetails.baseSha,
-                        reviewers: [
-                            ...new Set([
-                                ...contextDetails.reviewers,
-                                ...((_b = (_a = assignedResult.data) === null || _a === void 0 ? void 0 : _a.reviewers) !== null && _b !== void 0 ? _b : []),
-                            ]),
-                        ],
-                    },
-                    contextPayload,
-                    labelReviewers: config.assign,
-                });
-                if (unassignedResult.status === "error") {
-                    core.setFailed(unassignedResult.message);
-                    return;
+            core.info(` 📄 ${assignedResult.message}: ${assignedResult.status}`);
+            if (assignedResult.data) {
+                for (const reviewer of (_a = assignedResult.data) === null || _a === void 0 ? void 0 : _a.reviewers) {
+                    core.info(` 📄 Assigning reviewer: ${reviewer}`);
                 }
             }
+            // if (unassignIfLabelRemoved) {
+            //   core.debug("Unassigning reviewers...");
+            //   const unassignedResult = await unassignReviewersAsync({
+            //     client,
+            //     contextDetails: {
+            //       labels: contextDetails.labels,
+            //       baseSha: contextDetails.baseSha,
+            //       reviewers: [
+            //         ...new Set([
+            //           ...contextDetails.reviewers,
+            //           ...(assignedResult.data?.reviewers ?? []),
+            //         ]),
+            //       ],
+            //     },
+            //     contextPayload,
+            //     labelReviewers: config.assign,
+            //   });
+            //   if (unassignedResult.status === "error") {
+            //     core.setFailed(unassignedResult.message);
+            //     return;
+            //   }
+            // }
         }
         catch (error) {
             if (error instanceof Error) {
@@ -428,87 +432,6 @@ exports.setReviewersAsync = setReviewersAsync;
 
 /***/ }),
 
-/***/ 5422:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.unassignReviewersAsync = void 0;
-const setReviewersAsync_1 = __nccwpck_require__(2434);
-function unassignReviewersAsync({ client, labelReviewers, contextDetails, contextPayload, }) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (contextDetails == null) {
-            return {
-                status: "error",
-                message: "No action context",
-            };
-        }
-        const labels = Object.keys(labelReviewers);
-        const reviewersByLabelInclude = [];
-        const reviewersByLabelMiss = [];
-        for (const label of labels) {
-            if (!contextDetails.labels.includes(label)) {
-                reviewersByLabelMiss.push(...labelReviewers[label]);
-            }
-            else {
-                reviewersByLabelInclude.push(...labelReviewers[label]);
-            }
-        }
-        if (reviewersByLabelMiss.length === 0) {
-            return {
-                status: "info",
-                message: "No reviewers to unassign",
-            };
-        }
-        let reviewersToUnassign = [];
-        if (contextDetails.labels.length === 0) {
-            reviewersToUnassign = [
-                ...new Set([...reviewersByLabelMiss, ...reviewersByLabelInclude]),
-            ];
-        }
-        else {
-            reviewersToUnassign = reviewersByLabelMiss.filter((reviewer) => !reviewersByLabelInclude.includes(reviewer));
-        }
-        if (reviewersToUnassign.length === 0) {
-            return {
-                status: "info",
-                message: "No reviewers to unassign",
-            };
-        }
-        const result = yield (0, setReviewersAsync_1.setReviewersAsync)({
-            client,
-            reviewers: reviewersToUnassign,
-            contextPayload,
-            action: "unassign",
-        });
-        if (result == null) {
-            return {
-                status: "info",
-                message: "No reviewers to unassign",
-            };
-        }
-        return {
-            status: "success",
-            message: "Reviewers have been unassigned",
-            data: { url: result.url, reviewers: reviewersToUnassign },
-        };
-    });
-}
-exports.unassignReviewersAsync = unassignReviewersAsync;
-
-
-/***/ }),
-
 /***/ 6401:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -580,9 +503,9 @@ function getChangedFiles(client, prNumber) {
         const listFilesResponse = yield client.paginate(listFilesOptions);
         const changedFiles = listFilesResponse.map((f) => f.filename);
         if (changedFiles.length > 0) {
-            core.info("changed files:");
+            core.info("📄 Changed files:");
             for (const file of changedFiles) {
-                core.info(">  " + file);
+                core.info(`  📄 ${file}`);
             }
         }
         return changedFiles;
@@ -640,7 +563,7 @@ const helpers = __importStar(__nccwpck_require__(6401));
 function runLabeler(client, configPath, prNumber) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const syncLabels = !!core.getInput("sync-labels", { required: false });
+            // const syncLabels = !!core.getInput("sync-labels", { required: false });
             const { data: pullRequest } = yield client.rest.pulls.get({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
@@ -650,22 +573,24 @@ function runLabeler(client, configPath, prNumber) {
             const changedFiles = yield helpers.getChangedFiles(client, prNumber);
             const labelGlobs = yield getLabelGlobs(client, configPath);
             const labels = [];
-            const labelsToRemove = [];
+            // const labelsToRemove: string[] = [];
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
                 if (checkGlobs(changedFiles, globs)) {
                     labels.push(label);
-                }
-                else if (pullRequest.labels.find((l) => l.name === label)) {
-                    labelsToRemove.push(label);
+                    // } else if (pullRequest.labels.find((l) => l.name === label)) {
+                    //   labelsToRemove.push(label);
                 }
             }
             if (labels.length > 0) {
+                for (const label of labels) {
+                    core.info(` 📄 Adding label: ${label}`);
+                }
                 yield addLabels(client, prNumber, labels);
             }
-            if (syncLabels && labelsToRemove.length) {
-                yield removeLabels(client, prNumber, labelsToRemove);
-            }
+            // if (syncLabels && labelsToRemove.length) {
+            //   await removeLabels(client, prNumber, labelsToRemove);
+            // }
         }
         catch (error) {
             core.error(error);
@@ -784,16 +709,22 @@ function addLabels(client, prNumber, labels) {
         });
     });
 }
-function removeLabels(client, prNumber, labels) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield Promise.all(labels.map((label) => client.rest.issues.removeLabel({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            issue_number: prNumber,
-            name: label,
-        })));
-    });
-}
+// async function removeLabels(
+//   client: common.ClientType,
+//   prNumber: number,
+//   labels: string[]
+// ) {
+//   await Promise.all(
+//     labels.map((label) =>
+//       client.rest.issues.removeLabel({
+//         owner: github.context.repo.owner,
+//         repo: github.context.repo.repo,
+//         issue_number: prNumber,
+//         name: label,
+//       })
+//     )
+//   );
+// }
 
 
 /***/ }),
@@ -853,9 +784,10 @@ function run() {
         const token = core.getInput("repo-token", { required: true });
         const configPath = core.getInput("configuration-path", { required: true });
         const client = github.getOctokit(token);
+        core.info(`📄 Pull Request Number: ${prNumber}`);
         yield (0, labeler_1.runLabeler)(client, configPath, prNumber);
         yield (0, assigner_1.runAssigner)(client, configPath);
-        yield (0, owner_1.runOwner)(client);
+        yield (0, owner_1.runOwner)(client, prNumber);
     });
 }
 exports.run = run;
@@ -905,54 +837,30 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.runOwner = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-function runOwner(client) {
-    var _a, _b, _c, _d, _e, _f, _g;
+function runOwner(client, prNumber) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const context = github === null || github === void 0 ? void 0 : github.context;
-            if (!hasValidOwnerInContext(context)) {
-                return core.setFailed(`Valid owner is missing from context`);
+            const assignees = getAssigneeOrAssignees(context);
+            if (assignees.length > 0) {
+                return core.setFailed(`  🚨 Assignee(s) already exist(s): [${assignees.join(", ")}]`);
             }
-            if (!hasValidRepoInContext(context)) {
-                return core.setFailed(`Valid repo is missing from context`);
-            }
-            if (!hasValidPullRequestNumberInContext(context)) {
-                return core.setFailed(`Valid Pull Request number is missing from context`);
-            }
-            if (hasAssigneeOrAssignees(context)) {
-                return core.setFailed(`Assignee/s already exist/s: [${getAssigneeOrAssignees(context).join(", ")}]`);
-            }
-            const assignment = yield client.rest.issues.addAssignees({
+            yield client.rest.issues.addAssignees({
                 owner: (_a = context === null || context === void 0 ? void 0 : context.repo) === null || _a === void 0 ? void 0 : _a.owner,
                 repo: (_b = context === null || context === void 0 ? void 0 : context.repo) === null || _b === void 0 ? void 0 : _b.repo,
-                issue_number: Number((_d = (_c = context === null || context === void 0 ? void 0 : context.payload) === null || _c === void 0 ? void 0 : _c.pull_request) === null || _d === void 0 ? void 0 : _d.number),
+                issue_number: prNumber,
                 assignees: [context === null || context === void 0 ? void 0 : context.actor],
             });
-            core.info(`${context === null || context === void 0 ? void 0 : context.actor} assigned to Pull Request #${(_f = (_e = context === null || context === void 0 ? void 0 : context.payload) === null || _e === void 0 ? void 0 : _e.pull_request) === null || _f === void 0 ? void 0 : _f.number} on ${(_g = context === null || context === void 0 ? void 0 : context.repo) === null || _g === void 0 ? void 0 : _g.repo}`);
+            core.info(`  📄 ${context === null || context === void 0 ? void 0 : context.actor} assigned`);
         }
         catch (error) {
-            core.error(error);
+            core.error(`  🚨 ${error}`);
             core.setFailed(error.message);
         }
     });
 }
 exports.runOwner = runOwner;
-function hasValidOwnerInContext(context) {
-    var _a;
-    return !!((_a = context === null || context === void 0 ? void 0 : context.repo) === null || _a === void 0 ? void 0 : _a.owner);
-}
-function hasValidRepoInContext(context) {
-    var _a;
-    return !!((_a = context === null || context === void 0 ? void 0 : context.repo) === null || _a === void 0 ? void 0 : _a.repo);
-}
-function hasValidPullRequestNumberInContext(context) {
-    var _a, _b;
-    return !!Number((_b = (_a = context === null || context === void 0 ? void 0 : context.payload) === null || _a === void 0 ? void 0 : _a.pull_request) === null || _b === void 0 ? void 0 : _b.number);
-}
-function hasAssigneeOrAssignees(context) {
-    var _a;
-    return ((_a = getAssigneeOrAssignees(context)) === null || _a === void 0 ? void 0 : _a.length) > 0;
-}
 function getAssigneeOrAssignees(context) {
     var _a, _b, _c, _d, _e, _f, _g;
     let assignees = ((_b = (_a = context === null || context === void 0 ? void 0 : context.payload) === null || _a === void 0 ? void 0 : _a.pull_request) === null || _b === void 0 ? void 0 : _b.assignee)
@@ -961,10 +869,7 @@ function getAssigneeOrAssignees(context) {
     (_g = (_f = (_e = context === null || context === void 0 ? void 0 : context.payload) === null || _e === void 0 ? void 0 : _e.pull_request) === null || _f === void 0 ? void 0 : _f.assignees) === null || _g === void 0 ? void 0 : _g.forEach((assignee) => {
         assignees.push(assignee);
     });
-    if ((assignees === null || assignees === void 0 ? void 0 : assignees.length) > 0) {
-        return assignees;
-    }
-    return [];
+    return (assignees === null || assignees === void 0 ? void 0 : assignees.length) > 0 ? assignees : [];
 }
 
 

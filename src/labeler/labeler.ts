@@ -13,7 +13,7 @@ export async function runLabeler(
   prNumber: number
 ) {
   try {
-    const syncLabels = !!core.getInput("sync-labels", { required: false });
+    // const syncLabels = !!core.getInput("sync-labels", { required: false });
 
     const { data: pullRequest } = await client.rest.pulls.get({
       owner: github.context.repo.owner,
@@ -31,23 +31,26 @@ export async function runLabeler(
       await getLabelGlobs(client, configPath);
 
     const labels: string[] = [];
-    const labelsToRemove: string[] = [];
+    // const labelsToRemove: string[] = [];
     for (const [label, globs] of labelGlobs.entries()) {
       core.debug(`processing ${label}`);
       if (checkGlobs(changedFiles, globs)) {
         labels.push(label);
-      } else if (pullRequest.labels.find((l) => l.name === label)) {
-        labelsToRemove.push(label);
+        // } else if (pullRequest.labels.find((l) => l.name === label)) {
+        //   labelsToRemove.push(label);
       }
     }
 
     if (labels.length > 0) {
+      for (const label of labels) {
+        core.info(` 📄 Adding label: ${label}`);
+      }
       await addLabels(client, prNumber, labels);
     }
 
-    if (syncLabels && labelsToRemove.length) {
-      await removeLabels(client, prNumber, labelsToRemove);
-    }
+    // if (syncLabels && labelsToRemove.length) {
+    //   await removeLabels(client, prNumber, labelsToRemove);
+    // }
   } catch (error: any) {
     core.error(error);
     core.setFailed(error.message);
@@ -198,19 +201,19 @@ async function addLabels(
   });
 }
 
-async function removeLabels(
-  client: common.ClientType,
-  prNumber: number,
-  labels: string[]
-) {
-  await Promise.all(
-    labels.map((label) =>
-      client.rest.issues.removeLabel({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        issue_number: prNumber,
-        name: label,
-      })
-    )
-  );
-}
+// async function removeLabels(
+//   client: common.ClientType,
+//   prNumber: number,
+//   labels: string[]
+// ) {
+//   await Promise.all(
+//     labels.map((label) =>
+//       client.rest.issues.removeLabel({
+//         owner: github.context.repo.owner,
+//         repo: github.context.repo.repo,
+//         issue_number: prNumber,
+//         name: label,
+//       })
+//     )
+//   );
+// }

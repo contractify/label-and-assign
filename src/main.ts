@@ -18,9 +18,11 @@ export async function run() {
   const configPath = core.getInput("configuration-path", { required: true });
   const client: common.ClientType = github.getOctokit(token);
 
+  core.info(`📄 Pull Request Number: ${prNumber}`);
+
   await runLabeler(client, configPath, prNumber);
   await runAssigner(client, configPath);
-  await runOwner(client);
+  await runOwner(client, prNumber);
 }
 
 run();

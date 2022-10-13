@@ -10,6 +10,7 @@ Automatically label and assign new pull requests based on the paths of files bei
 
 Create a `.github/label-and-assign.yml` file containing:
 
+```yaml
 labels:
   dependencies:
   - composer.json
@@ -47,7 +48,32 @@ assign:
 
   javascript:
   - user4
+```
 
+### Sample workflow
+
+```yaml
+name: PR Automation
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened, synchronize]
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
+jobs:
+  automation:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Assign Labels and Users
+      uses: pieterclaerhout/label-and-assign@3015dc69ef33f6b6c0de777e960c3935053b35f7
+      if: ${{ !startsWith(github.ref, 'refs/heads/dependabot/') }}
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+```
 
 <!--
 The key is the name of the label in your repository that you want to add (eg: "merge conflict", "needs-updating") and the value is the path (glob) of the changed files (eg: `src/**/*`, `tests/*.spec.js`) or a match object.
