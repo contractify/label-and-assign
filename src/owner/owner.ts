@@ -11,7 +11,7 @@ export async function runOwner(client: common.ClientType, prNumber: number) {
     const assignees = getAssigneeOrAssignees(context);
     if (assignees.length > 0) {
       return core.setFailed(
-        `  🚨 Assignee(s) already exist(s): [${assignees.join(", ")}]`
+        `🚨 Assignee(s) already exist(s): [${assignees.join(", ")}]`
       );
     }
 
@@ -22,7 +22,7 @@ export async function runOwner(client: common.ClientType, prNumber: number) {
       assignees: [context?.actor],
     });
 
-    core.info(`  📄 ${context?.actor} assigned`);
+    core.info(`📄 Assigning owner: ${context?.actor}`);
   } catch (error: any) {
     core.error(`  🚨 ${error}`);
     core.setFailed(error.message);

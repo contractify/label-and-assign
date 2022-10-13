@@ -39,9 +39,9 @@ export async function getChangedFiles(
   const changedFiles = listFilesResponse.map((f: any) => f.filename);
 
   if (changedFiles.length > 0) {
-    core.info("📄 Changed files:");
+    core.info("📄 Changed files");
     for (const file of changedFiles) {
-      core.info(`  📄 ${file}`);
+      core.info(`  📄 Changed file: ${file}`);
     }
   }
 

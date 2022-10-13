@@ -77,34 +77,12 @@ function runAssigner(client, configPath) {
                 core.setFailed(assignedResult.message);
                 return;
             }
-            core.info(` 📄 ${assignedResult.message}: ${assignedResult.status}`);
+            core.info(` 📄 ${assignedResult.message}`);
             if (assignedResult.data) {
                 for (const reviewer of (_a = assignedResult.data) === null || _a === void 0 ? void 0 : _a.reviewers) {
                     core.info(` 📄 Assigning reviewer: ${reviewer}`);
                 }
             }
-            // if (unassignIfLabelRemoved) {
-            //   core.debug("Unassigning reviewers...");
-            //   const unassignedResult = await unassignReviewersAsync({
-            //     client,
-            //     contextDetails: {
-            //       labels: contextDetails.labels,
-            //       baseSha: contextDetails.baseSha,
-            //       reviewers: [
-            //         ...new Set([
-            //           ...contextDetails.reviewers,
-            //           ...(assignedResult.data?.reviewers ?? []),
-            //         ]),
-            //       ],
-            //     },
-            //     contextPayload,
-            //     labelReviewers: config.assign,
-            //   });
-            //   if (unassignedResult.status === "error") {
-            //     core.setFailed(unassignedResult.message);
-            //     return;
-            //   }
-            // }
         }
         catch (error) {
             if (error instanceof Error) {
@@ -503,9 +481,9 @@ function getChangedFiles(client, prNumber) {
         const listFilesResponse = yield client.paginate(listFilesOptions);
         const changedFiles = listFilesResponse.map((f) => f.filename);
         if (changedFiles.length > 0) {
-            core.info("📄 Changed files:");
+            core.info("📄 Changed files");
             for (const file of changedFiles) {
-                core.info(`  📄 ${file}`);
+                core.info(`  📄 Changed file: ${file}`);
             }
         }
         return changedFiles;
@@ -563,7 +541,6 @@ const helpers = __importStar(__nccwpck_require__(6401));
 function runLabeler(client, configPath, prNumber) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            // const syncLabels = !!core.getInput("sync-labels", { required: false });
             const { data: pullRequest } = yield client.rest.pulls.get({
                 owner: github.context.repo.owner,
                 repo: github.context.repo.repo,
@@ -573,24 +550,19 @@ function runLabeler(client, configPath, prNumber) {
             const changedFiles = yield helpers.getChangedFiles(client, prNumber);
             const labelGlobs = yield getLabelGlobs(client, configPath);
             const labels = [];
-            // const labelsToRemove: string[] = [];
             for (const [label, globs] of labelGlobs.entries()) {
                 core.debug(`processing ${label}`);
                 if (checkGlobs(changedFiles, globs)) {
                     labels.push(label);
-                    // } else if (pullRequest.labels.find((l) => l.name === label)) {
-                    //   labelsToRemove.push(label);
                 }
             }
             if (labels.length > 0) {
+                core.info(`📄 Adding labels`);
                 for (const label of labels) {
                     core.info(` 📄 Adding label: ${label}`);
                 }
                 yield addLabels(client, prNumber, labels);
             }
-            // if (syncLabels && labelsToRemove.length) {
-            //   await removeLabels(client, prNumber, labelsToRemove);
-            // }
         }
         catch (error) {
             core.error(error);
@@ -603,9 +575,7 @@ function getLabelGlobs(client, configurationPath) {
     return __awaiter(this, void 0, void 0, function* () {
         const configurationContent = yield helpers.fetchContent(client, configurationPath);
         core.debug(configurationContent);
-        // loads (hopefully) a `{[label:string]: string | types.StringOrMatchConfig[]}`, but is `any`:
         const configObject = yaml.load(configurationContent);
-        // transform `any` => `Map<string,StringOrMatchConfig[]>` or throw if yaml is malformed:
         return getLabelGlobMapFromObject(configObject);
     });
 }
@@ -709,22 +679,6 @@ function addLabels(client, prNumber, labels) {
         });
     });
 }
-// async function removeLabels(
-//   client: common.ClientType,
-//   prNumber: number,
-//   labels: string[]
-// ) {
-//   await Promise.all(
-//     labels.map((label) =>
-//       client.rest.issues.removeLabel({
-//         owner: github.context.repo.owner,
-//         repo: github.context.repo.repo,
-//         issue_number: prNumber,
-//         name: label,
-//       })
-//     )
-//   );
-// }
 
 
 /***/ }),
@@ -781,7 +735,7 @@ function run() {
             console.log("Could not get pull request number from context, exiting");
             return;
         }
-        const token = core.getInput("repo-token", { required: true });
+        const token = core.getInput("token", { required: true });
         const configPath = core.getInput("configuration-path", { required: true });
         const client = github.getOctokit(token);
         core.info(`📄 Pull Request Number: ${prNumber}`);
@@ -844,7 +798,7 @@ function runOwner(client, prNumber) {
             const context = github === null || github === void 0 ? void 0 : github.context;
             const assignees = getAssigneeOrAssignees(context);
             if (assignees.length > 0) {
-                return core.setFailed(`  🚨 Assignee(s) already exist(s): [${assignees.join(", ")}]`);
+                return core.setFailed(`🚨 Assignee(s) already exist(s): [${assignees.join(", ")}]`);
             }
             yield client.rest.issues.addAssignees({
                 owner: (_a = context === null || context === void 0 ? void 0 : context.repo) === null || _a === void 0 ? void 0 : _a.owner,
@@ -852,7 +806,7 @@ function runOwner(client, prNumber) {
                 issue_number: prNumber,
                 assignees: [context === null || context === void 0 ? void 0 : context.actor],
             });
-            core.info(`  📄 ${context === null || context === void 0 ? void 0 : context.actor} assigned`);
+            core.info(`📄 Assigning owner: ${context === null || context === void 0 ? void 0 : context.actor}`);
         }
         catch (error) {
             core.error(`  🚨 ${error}`);

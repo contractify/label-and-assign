@@ -14,7 +14,7 @@ export async function run() {
     return;
   }
 
-  const token = core.getInput("repo-token", { required: true });
+  const token = core.getInput("token", { required: true });
   const configPath = core.getInput("configuration-path", { required: true });
   const client: common.ClientType = github.getOctokit(token);
 

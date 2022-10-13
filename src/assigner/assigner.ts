@@ -5,7 +5,6 @@ import { getYamlConfigAsync } from "./utils/getYamlConfigAsync";
 import { parseConfig } from "./utils/parseConfig";
 import { getContextPullRequestDetails } from "./utils/getContextPullRequestDetails";
 import { assignReviewersAsync } from "./utils/assignReviewersAsync";
-import { unassignReviewersAsync } from "./utils/unassignReviewersAsync";
 
 import * as common from "../common/common";
 
@@ -53,37 +52,12 @@ export async function runAssigner(
       return;
     }
 
-    core.info(` 📄 ${assignedResult.message}: ${assignedResult.status}`);
+    core.info(` 📄 ${assignedResult.message}`);
     if (assignedResult.data) {
       for (const reviewer of assignedResult.data?.reviewers) {
         core.info(` 📄 Assigning reviewer: ${reviewer}`);
       }
     }
-
-    // if (unassignIfLabelRemoved) {
-    //   core.debug("Unassigning reviewers...");
-
-    //   const unassignedResult = await unassignReviewersAsync({
-    //     client,
-    //     contextDetails: {
-    //       labels: contextDetails.labels,
-    //       baseSha: contextDetails.baseSha,
-    //       reviewers: [
-    //         ...new Set([
-    //           ...contextDetails.reviewers,
-    //           ...(assignedResult.data?.reviewers ?? []),
-    //         ]),
-    //       ],
-    //     },
-    //     contextPayload,
-    //     labelReviewers: config.assign,
-    //   });
-
-    //   if (unassignedResult.status === "error") {
-    //     core.setFailed(unassignedResult.message);
-    //     return;
-    //   }
-    // }
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);
