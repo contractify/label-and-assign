@@ -126,7 +126,7 @@ async function fetchContent(
 function getLabelGlobMapFromObject(
   configObject: any
 ): Map<string, StringOrMatchConfig[]> {
-  const labelConfig = configObject['labels'];
+  const labelConfig = configObject["labels"];
 
   core.debug(labelConfig);
 
