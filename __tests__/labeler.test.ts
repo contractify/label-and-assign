@@ -1,4 +1,4 @@
-import { checkGlobs } from "../src/labeler";
+import { checkGlobs } from "../src/label-and-assign";
 
 import * as core from "@actions/core";
 

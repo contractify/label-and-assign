@@ -1,4 +1,4 @@
-import { run } from "../src/labeler";
+import { run } from "../src/label-and-assign";
 import * as github from "@actions/github";
 import * as core from "@actions/core";
 
