@@ -1,9 +1,9 @@
 import * as github from "@actions/github";
 import * as core from "@actions/core";
-import * as types from "./types";
+import * as common from "./common";
 
 export async function fetchContent(
-  client: types.ClientType,
+  client: common.ClientType,
   repoPath: string
 ): Promise<string> {
   const response: any = await client.rest.repos.getContent({
@@ -26,7 +26,7 @@ export function getPrNumber(): number | undefined {
 }
 
 export async function getChangedFiles(
-  client: types.ClientType,
+  client: common.ClientType,
   prNumber: number
 ): Promise<string[]> {
   const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({

@@ -1,4 +1,4 @@
-import { runLabeler } from "../src/labeler";
+import { runLabeler } from "../src/labeler/labeler";
 import * as github from "@actions/github";
 import * as core from "@actions/core";
 

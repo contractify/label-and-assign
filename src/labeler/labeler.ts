@@ -3,11 +3,12 @@ import * as github from "@actions/github";
 import * as yaml from "js-yaml";
 import { Minimatch, IMinimatch } from "minimatch";
 
-import * as helpers from "./helpers";
+import * as common from "../common/common";
+import * as helpers from "../common/helpers";
 import * as types from "./types";
 
 export async function runLabeler(
-  client: types.ClientType,
+  client: common.ClientType,
   configPath: string,
   prNumber: number
 ) {
@@ -54,7 +55,7 @@ export async function runLabeler(
 }
 
 async function getLabelGlobs(
-  client: types.ClientType,
+  client: common.ClientType,
   configurationPath: string
 ): Promise<Map<string, types.StringOrMatchConfig[]>> {
   const configurationContent: string = await helpers.fetchContent(
@@ -185,7 +186,7 @@ function checkMatch(
 }
 
 async function addLabels(
-  client: types.ClientType,
+  client: common.ClientType,
   prNumber: number,
   labels: string[]
 ) {
@@ -198,7 +199,7 @@ async function addLabels(
 }
 
 async function removeLabels(
-  client: types.ClientType,
+  client: common.ClientType,
   prNumber: number,
   labels: string[]
 ) {
