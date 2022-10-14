@@ -8,17 +8,15 @@ import { runAssigner } from "./assigner/assigner";
 import { runOwner } from "./owner/owner";
 
 export async function run() {
-  core.info(JSON.stringify(github.context));
+  const token = core.getInput("token", { required: true });
+  const configPath = core.getInput("configuration-path", { required: true });
+  const client: common.ClientType = github.getOctokit(token);
 
-  const prNumber = helpers.getPrNumber();
+  const prNumber = await helpers.getPrNumber(client);
   if (!prNumber) {
     console.log("Could not get pull request number from context, exiting");
     return;
   }
-
-  const token = core.getInput("token", { required: true });
-  const configPath = core.getInput("configuration-path", { required: true });
-  const client: common.ClientType = github.getOctokit(token);
 
   core.info(`📄 Pull Request Number: ${prNumber}`);
 

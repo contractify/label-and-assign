@@ -463,12 +463,25 @@ function fetchContent(client, repoPath) {
     });
 }
 exports.fetchContent = fetchContent;
-function getPrNumber() {
-    const pullRequest = github.context.payload.pull_request;
-    if (!pullRequest) {
-        return undefined;
-    }
-    return pullRequest.number;
+function getPrNumber(client) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const pullRequest = github.context.payload.pull_request;
+        if (pullRequest) {
+            return pullRequest.number;
+        }
+        const result = yield client.rest.repos.listPullRequestsAssociatedWithCommit({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            commit_sha: github.context.sha,
+        });
+        const pr = result.data
+            .filter((el) => el.state === "open")
+            .find((el) => {
+            return github.context.payload.ref === `refs/heads/${el.head.ref}`;
+        });
+        result.data.forEach((el) => core.info(`${el.number} | ${el.title}`));
+        return pr === null || pr === void 0 ? void 0 : pr.number;
+    });
 }
 exports.getPrNumber = getPrNumber;
 function getChangedFiles(client, prNumber) {
@@ -730,15 +743,14 @@ const assigner_1 = __nccwpck_require__(3463);
 const owner_1 = __nccwpck_require__(7612);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        core.info(JSON.stringify(github.context));
-        const prNumber = helpers.getPrNumber();
+        const token = core.getInput("token", { required: true });
+        const configPath = core.getInput("configuration-path", { required: true });
+        const client = github.getOctokit(token);
+        const prNumber = yield helpers.getPrNumber(client);
         if (!prNumber) {
             console.log("Could not get pull request number from context, exiting");
             return;
         }
-        const token = core.getInput("token", { required: true });
-        const configPath = core.getInput("configuration-path", { required: true });
-        const client = github.getOctokit(token);
         core.info(`📄 Pull Request Number: ${prNumber}`);
         yield (0, labeler_1.runLabeler)(client, configPath, prNumber);
         yield (0, assigner_1.runAssigner)(client, configPath);

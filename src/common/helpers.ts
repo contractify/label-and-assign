@@ -16,13 +16,29 @@ export async function fetchContent(
   return Buffer.from(response.data.content, response.data.encoding).toString();
 }
 
-export function getPrNumber(): number | undefined {
+export async function getPrNumber(
+  client: common.ClientType
+): Promise<number | undefined> {
   const pullRequest = github.context.payload.pull_request;
-  if (!pullRequest) {
-    return undefined;
+  if (pullRequest) {
+    return pullRequest.number;
   }
 
-  return pullRequest.number;
+  const result = await client.rest.repos.listPullRequestsAssociatedWithCommit({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    commit_sha: github.context.sha,
+  });
+
+  const pr = result.data
+    .filter((el) => el.state === "open")
+    .find((el) => {
+      return github.context.payload.ref === `refs/heads/${el.head.ref}`;
+    });
+
+  result.data.forEach((el) => core.info(`${el.number} | ${el.title}`));
+
+  return pr?.number;
 }
 
 export async function getChangedFiles(
