@@ -69,7 +69,7 @@ jobs:
       uses: pieterclaerhout/label-and-assign@v1.1.0
       if: ${{ !startsWith(github.ref, 'refs/heads/dependabot/') }}
       with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        token: "${{ secrets.GITHUB_TOKEN }}"
 ```
 
 #### Inputs
