@@ -74,7 +74,7 @@ jobs:
 
 #### Inputs
 
-Various inputs are defined in [`action.yml`](action.yml) to let you configure the labeler:
+Various inputs are defined in [`action.yml`](action.yml) to let you configure the actions:
 
 | Name | Description | Default |
 | - | - | - |
