@@ -29,7 +29,7 @@ export async function run() {
   core.info(`🏭 Running owner for ${prNumber}`);
   await runOwner(client, prNumber);
 
-  core.info(`📄 Finsihed for ${prNumber}`);
+  core.info(`📄 Finished for ${prNumber}`);
 }
 
 run();

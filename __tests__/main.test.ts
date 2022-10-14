@@ -8,7 +8,6 @@ jest.mock("@actions/github");
 
 const gh = github.getOctokit("_");
 const addLabelsMock = jest.spyOn(gh.rest.issues, "addLabels");
-const removeLabelMock = jest.spyOn(gh.rest.issues, "removeLabel");
 const reposMock = jest.spyOn(gh.rest.repos, "getContent");
 const paginateMock = jest.spyOn(gh, "paginate");
 
@@ -25,7 +24,6 @@ describe("run", () => {
 
     await runLabeler(gh, "only_pdfs.yml", 123);
 
-    expect(removeLabelMock).toHaveBeenCalledTimes(0);
     expect(addLabelsMock).toHaveBeenCalledTimes(1);
     expect(addLabelsMock).toHaveBeenCalledWith({
       owner: "monalisa",
@@ -41,7 +39,6 @@ describe("run", () => {
 
     await runLabeler(gh, "only_pdfs.yml", 123);
 
-    expect(removeLabelMock).toHaveBeenCalledTimes(0);
     expect(addLabelsMock).toHaveBeenCalledTimes(0);
   });
 });
