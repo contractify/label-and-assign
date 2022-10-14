@@ -1,6 +1,6 @@
 {
   "name": "label-and-assign",
-  "version": "4.0.1",
+  "version": "1.1.0",
   "description": "Labels and assigns pull requests by files altered",
   "main": "lib/main.js",
   "scripts": {
