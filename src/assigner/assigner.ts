@@ -19,7 +19,7 @@ export async function runAssigner(
       required: false,
     });
 
-    const contextDetails = getContextPullRequestDetails();
+    const contextDetails = await getContextPullRequestDetails(client);
     if (contextDetails == null) {
       throw new Error("No context details");
     }

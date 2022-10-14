@@ -53,7 +53,7 @@ function runAssigner(client, configPath) {
             const unassignIfLabelRemoved = core.getInput("unassign-if-label-removed", {
                 required: false,
             });
-            const contextDetails = (0, getContextPullRequestDetails_1.getContextPullRequestDetails)();
+            const contextDetails = yield (0, getContextPullRequestDetails_1.getContextPullRequestDetails)(client);
             if (contextDetails == null) {
                 throw new Error("No context details");
             }
@@ -226,22 +226,55 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getContextPullRequestDetails = void 0;
+const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-function getContextPullRequestDetails() {
+function getContextPullRequestDetails(client) {
     var _a;
-    const pullRequest = github.context.payload.pull_request;
-    if (typeof pullRequest === "undefined") {
-        return null;
-    }
-    const labels = pullRequest.labels;
-    const reviewers = pullRequest.requested_reviewers;
-    return {
-        labels: labels.map((label) => label.name),
-        reviewers: reviewers.map((reviewer) => reviewer.login),
-        baseSha: (_a = pullRequest === null || pullRequest === void 0 ? void 0 : pullRequest.base) === null || _a === void 0 ? void 0 : _a.sha,
-    };
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const pullRequest = github.context.payload.pull_request;
+            if (!pullRequest) {
+                const result = yield client.rest.repos.listPullRequestsAssociatedWithCommit({
+                    owner: github.context.repo.owner,
+                    repo: github.context.repo.repo,
+                    commit_sha: github.context.sha,
+                });
+                const pullRequest = result.data
+                    .filter((el) => el.state === "open")
+                    .find((el) => {
+                    return github.context.payload.ref === `refs/heads/${el.head.ref}`;
+                });
+                if (pullRequest !== undefined) {
+                    core.info(`📄 Linked PR: ${pullRequest.number} | ${pullRequest.title}`);
+                }
+            }
+            if (pullRequest === undefined) {
+                return undefined;
+            }
+            const labels = pullRequest.labels;
+            const reviewers = pullRequest.requested_reviewers;
+            return {
+                labels: labels.map((label) => label.name),
+                reviewers: reviewers.map((reviewer) => reviewer.login),
+                baseSha: (_a = pullRequest === null || pullRequest === void 0 ? void 0 : pullRequest.base) === null || _a === void 0 ? void 0 : _a.sha,
+            };
+        }
+        catch (error) {
+            core.error(`🚨 Failed to get PR number: ${error}`);
+            return undefined;
+        }
+    });
 }
 exports.getContextPullRequestDetails = getContextPullRequestDetails;
 
@@ -498,9 +531,11 @@ function getChangedFiles(client, prNumber) {
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             pull_number: prNumber,
+            per_page: 100,
         });
         const listFilesResponse = yield client.paginate(listFilesOptions);
         const changedFiles = listFilesResponse.map((f) => f.filename);
+        // TODO: loop when more than 30 files changed
         if (changedFiles.length > 0) {
             core.info("📄 Changed files");
             for (const file of changedFiles) {
@@ -760,11 +795,11 @@ function run() {
             return;
         }
         core.info(`📄 Pull Request Number: ${prNumber}`);
-        core.info(`📄 Running labeler for ${prNumber}`);
+        core.info(`🏭 Running labeler for ${prNumber}`);
         yield (0, labeler_1.runLabeler)(client, configPath, prNumber);
-        core.info(`📄 Running assigner for ${prNumber}`);
+        core.info(`🏭 Running assigner for ${prNumber}`);
         yield (0, assigner_1.runAssigner)(client, configPath);
-        core.info(`📄 Running owner for ${prNumber}`);
+        core.info(`🏭 Running owner for ${prNumber}`);
         yield (0, owner_1.runOwner)(client, prNumber);
         core.info(`📄 Finsihed for ${prNumber}`);
     });
