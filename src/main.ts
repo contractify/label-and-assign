@@ -24,7 +24,7 @@ export async function run() {
   await runLabeler(client, configPath, prNumber);
 
   core.info(`🏭 Running assigner for ${prNumber}`);
-  await runAssigner(client, configPath);
+  await runAssigner(client, configPath, prNumber);
 
   core.info(`🏭 Running owner for ${prNumber}`);
   await runOwner(client, prNumber);

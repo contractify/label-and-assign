@@ -2,6 +2,8 @@ import * as github from "@actions/github";
 import * as core from "@actions/core";
 import * as common from "./common";
 
+import type { GithubLabel, GithubReviewer } from "./common";
+
 export async function fetchContent(
   client: common.ClientType,
   repoPath: string
@@ -74,4 +76,30 @@ export async function getChangedFiles(
   }
 
   return changedFiles;
+}
+
+export async function getPrReviewersAndAssignees(
+  client: common.ClientType,
+  prNumber: number
+): Promise<common.PullRequestDetails | undefined> {
+  try {
+    const pullRequest = await client.rest.pulls.get({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      pull_number: prNumber,
+    });
+
+    const labels = pullRequest.data.labels as GithubLabel[];
+    const reviewers = pullRequest.data.requested_reviewers as GithubReviewer[];
+
+    return {
+      prNumber: prNumber,
+      labels: labels.map((label) => label.name),
+      reviewers: reviewers.map((reviewer) => reviewer.login),
+      baseSha: pullRequest.data.base?.sha,
+    };
+  } catch (error: any) {
+    core.error(`🚨 Failed to get PR details: ${error}`);
+    return undefined;
+  }
 }

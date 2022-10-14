@@ -3,24 +3,24 @@ import * as github from "@actions/github";
 
 import { getYamlConfigAsync } from "./utils/getYamlConfigAsync";
 import { parseConfig } from "./utils/parseConfig";
-import { getContextPullRequestDetails } from "./utils/getContextPullRequestDetails";
 import { assignReviewersAsync } from "./utils/assignReviewersAsync";
 
 import * as common from "../common/common";
+import * as helpers from "../common/helpers";
 
 import { Config } from "./config";
 
 export async function runAssigner(
   client: common.ClientType,
-  configPath: string
+  configPath: string,
+  prNumber: number
 ): Promise<void> {
   try {
-    const unassignIfLabelRemoved = core.getInput("unassign-if-label-removed", {
-      required: false,
-    });
-
-    const contextDetails = await getContextPullRequestDetails(client);
-    if (contextDetails == null) {
+    const prReviewersAndAssignees = await helpers.getPrReviewersAndAssignees(
+      client,
+      prNumber
+    );
+    if (prReviewersAndAssignees === undefined) {
       throw new Error("No context details");
     }
 
@@ -41,10 +41,10 @@ export async function runAssigner(
     core.debug("Assigning reviewers...");
 
     const assignedResult = await assignReviewersAsync({
-      client,
-      contextDetails,
-      contextPayload,
+      client: client,
       labelReviewers: config.assign,
+      contextDetails: prReviewersAndAssignees,
+      contextPayload: contextPayload,
     });
 
     if (assignedResult.status === "error") {

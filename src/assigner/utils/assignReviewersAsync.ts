@@ -1,14 +1,13 @@
 import type { WebhookPayload } from "@actions/github/lib/interfaces";
 import type { Config } from "../config";
 import type { AssignReviewersReturn } from "../types";
-import type { ContextPullRequestDetails } from "./getContextPullRequestDetails";
 import { setReviewersAsync } from "./setReviewersAsync";
 import * as common from "../../common/common";
 
 interface Options {
   client: common.ClientType;
   labelReviewers: Config["assign"];
-  contextDetails: ContextPullRequestDetails;
+  contextDetails: common.PullRequestDetails;
   contextPayload: WebhookPayload;
 }
 

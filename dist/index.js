@@ -44,17 +44,14 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const getYamlConfigAsync_1 = __nccwpck_require__(7919);
 const parseConfig_1 = __nccwpck_require__(5826);
-const getContextPullRequestDetails_1 = __nccwpck_require__(7236);
 const assignReviewersAsync_1 = __nccwpck_require__(3019);
-function runAssigner(client, configPath) {
+const helpers = __importStar(__nccwpck_require__(6401));
+function runAssigner(client, configPath, prNumber) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const unassignIfLabelRemoved = core.getInput("unassign-if-label-removed", {
-                required: false,
-            });
-            const contextDetails = yield (0, getContextPullRequestDetails_1.getContextPullRequestDetails)(client);
-            if (contextDetails == null) {
+            const prReviewersAndAssignees = yield helpers.getPrReviewersAndAssignees(client, prNumber);
+            if (prReviewersAndAssignees === undefined) {
                 throw new Error("No context details");
             }
             let userConfig;
@@ -68,10 +65,10 @@ function runAssigner(client, configPath) {
             const contextPayload = github.context.payload;
             core.debug("Assigning reviewers...");
             const assignedResult = yield (0, assignReviewersAsync_1.assignReviewersAsync)({
-                client,
-                contextDetails,
-                contextPayload,
+                client: client,
                 labelReviewers: config.assign,
+                contextDetails: prReviewersAndAssignees,
+                contextPayload: contextPayload,
             });
             if (assignedResult.status === "error") {
                 core.setFailed(assignedResult.message);
@@ -194,89 +191,6 @@ function assignReviewersAsync({ client, labelReviewers, contextDetails, contextP
     });
 }
 exports.assignReviewersAsync = assignReviewersAsync;
-
-
-/***/ }),
-
-/***/ 7236:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getContextPullRequestDetails = void 0;
-const core = __importStar(__nccwpck_require__(2186));
-const github = __importStar(__nccwpck_require__(5438));
-function getContextPullRequestDetails(client) {
-    var _a;
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const pullRequest = github.context.payload.pull_request;
-            if (!pullRequest) {
-                const result = yield client.rest.repos.listPullRequestsAssociatedWithCommit({
-                    owner: github.context.repo.owner,
-                    repo: github.context.repo.repo,
-                    commit_sha: github.context.sha,
-                });
-                const pullRequest = result.data
-                    .filter((el) => el.state === "open")
-                    .find((el) => {
-                    return github.context.payload.ref === `refs/heads/${el.head.ref}`;
-                });
-                if (pullRequest !== undefined) {
-                    core.info(`📄 Linked PR: ${pullRequest.number} | ${pullRequest.title}`);
-                }
-            }
-            if (pullRequest === undefined) {
-                return undefined;
-            }
-            const labels = pullRequest.labels;
-            const reviewers = pullRequest.requested_reviewers;
-            return {
-                labels: labels.map((label) => label.name),
-                reviewers: reviewers.map((reviewer) => reviewer.login),
-                baseSha: (_a = pullRequest === null || pullRequest === void 0 ? void 0 : pullRequest.base) === null || _a === void 0 ? void 0 : _a.sha,
-            };
-        }
-        catch (error) {
-            core.error(`🚨 Failed to get PR number: ${error}`);
-            return undefined;
-        }
-    });
-}
-exports.getContextPullRequestDetails = getContextPullRequestDetails;
 
 
 /***/ }),
@@ -481,7 +395,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getChangedFiles = exports.getPrNumber = exports.fetchContent = void 0;
+exports.getPrReviewersAndAssignees = exports.getChangedFiles = exports.getPrNumber = exports.fetchContent = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
 function fetchContent(client, repoPath) {
@@ -546,6 +460,31 @@ function getChangedFiles(client, prNumber) {
     });
 }
 exports.getChangedFiles = getChangedFiles;
+function getPrReviewersAndAssignees(client, prNumber) {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const pullRequest = yield client.rest.pulls.get({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                pull_number: prNumber,
+            });
+            const labels = pullRequest.data.labels;
+            const reviewers = pullRequest.data.requested_reviewers;
+            return {
+                prNumber: prNumber,
+                labels: labels.map((label) => label.name),
+                reviewers: reviewers.map((reviewer) => reviewer.login),
+                baseSha: (_a = pullRequest.data.base) === null || _a === void 0 ? void 0 : _a.sha,
+            };
+        }
+        catch (error) {
+            core.error(`🚨 Failed to get PR details: ${error}`);
+            return undefined;
+        }
+    });
+}
+exports.getPrReviewersAndAssignees = getPrReviewersAndAssignees;
 
 
 /***/ }),
@@ -798,7 +737,7 @@ function run() {
         core.info(`🏭 Running labeler for ${prNumber}`);
         yield (0, labeler_1.runLabeler)(client, configPath, prNumber);
         core.info(`🏭 Running assigner for ${prNumber}`);
-        yield (0, assigner_1.runAssigner)(client, configPath);
+        yield (0, assigner_1.runAssigner)(client, configPath, prNumber);
         core.info(`🏭 Running owner for ${prNumber}`);
         yield (0, owner_1.runOwner)(client, prNumber);
         core.info(`📄 Finsihed for ${prNumber}`);
