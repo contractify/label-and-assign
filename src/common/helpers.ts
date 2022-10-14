@@ -22,8 +22,6 @@ export function getPrNumber(): number | undefined {
     return undefined;
   }
 
-  core.info(JSON.stringify(github.context));
-
   return pullRequest.number;
 }
 

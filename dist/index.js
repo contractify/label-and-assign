@@ -468,7 +468,6 @@ function getPrNumber() {
     if (!pullRequest) {
         return undefined;
     }
-    core.info(JSON.stringify(github.context));
     return pullRequest.number;
 }
 exports.getPrNumber = getPrNumber;
@@ -731,6 +730,7 @@ const assigner_1 = __nccwpck_require__(3463);
 const owner_1 = __nccwpck_require__(7612);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        core.info(JSON.stringify(github.context));
         const prNumber = helpers.getPrNumber();
         if (!prNumber) {
             console.log("Could not get pull request number from context, exiting");

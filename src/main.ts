@@ -8,6 +8,8 @@ import { runAssigner } from "./assigner/assigner";
 import { runOwner } from "./owner/owner";
 
 export async function run() {
+  core.info(JSON.stringify(github.context));
+
   const prNumber = helpers.getPrNumber();
   if (!prNumber) {
     console.log("Could not get pull request number from context, exiting");
