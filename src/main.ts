@@ -8,21 +8,28 @@ import { runAssigner } from "./assigner/assigner";
 import { runOwner } from "./owner/owner";
 
 export async function run() {
-  const prNumber = helpers.getPrNumber();
+  const token = core.getInput("token", { required: true });
+  const configPath = core.getInput("configuration-path", { required: true });
+  const client: common.ClientType = github.getOctokit(token);
+
+  const prNumber = await helpers.getPrNumber(client);
   if (!prNumber) {
     console.log("Could not get pull request number from context, exiting");
     return;
   }
 
-  const token = core.getInput("token", { required: true });
-  const configPath = core.getInput("configuration-path", { required: true });
-  const client: common.ClientType = github.getOctokit(token);
-
   core.info(`📄 Pull Request Number: ${prNumber}`);
 
+  core.info(`🏭 Running labeler for ${prNumber}`);
   await runLabeler(client, configPath, prNumber);
-  await runAssigner(client, configPath);
+
+  core.info(`🏭 Running assigner for ${prNumber}`);
+  await runAssigner(client, configPath, prNumber);
+
+  core.info(`🏭 Running owner for ${prNumber}`);
   await runOwner(client, prNumber);
+
+  core.info(`📄 Finsihed for ${prNumber}`);
 }
 
 run();

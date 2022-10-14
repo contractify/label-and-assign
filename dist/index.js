@@ -44,17 +44,14 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const getYamlConfigAsync_1 = __nccwpck_require__(7919);
 const parseConfig_1 = __nccwpck_require__(5826);
-const getContextPullRequestDetails_1 = __nccwpck_require__(7236);
 const assignReviewersAsync_1 = __nccwpck_require__(3019);
-function runAssigner(client, configPath) {
+const helpers = __importStar(__nccwpck_require__(6401));
+function runAssigner(client, configPath, prNumber) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const unassignIfLabelRemoved = core.getInput("unassign-if-label-removed", {
-                required: false,
-            });
-            const contextDetails = (0, getContextPullRequestDetails_1.getContextPullRequestDetails)();
-            if (contextDetails == null) {
+            const prReviewersAndAssignees = yield helpers.getPrReviewersAndAssignees(client, prNumber);
+            if (prReviewersAndAssignees === undefined) {
                 throw new Error("No context details");
             }
             let userConfig;
@@ -68,10 +65,10 @@ function runAssigner(client, configPath) {
             const contextPayload = github.context.payload;
             core.debug("Assigning reviewers...");
             const assignedResult = yield (0, assignReviewersAsync_1.assignReviewersAsync)({
-                client,
-                contextDetails,
-                contextPayload,
+                client: client,
                 labelReviewers: config.assign,
+                contextDetails: prReviewersAndAssignees,
+                contextPayload: contextPayload,
             });
             if (assignedResult.status === "error") {
                 core.setFailed(assignedResult.message);
@@ -175,10 +172,11 @@ function assignReviewersAsync({ client, labelReviewers, contextDetails, contextP
             };
         }
         const result = yield (0, setReviewersAsync_1.setReviewersAsync)({
-            client,
+            client: client,
             reviewers: reviewersToAssign,
-            contextPayload,
-            action: "assign",
+            contextPayload: contextPayload,
+            pullRequestDetails: contextDetails,
+            // action: "assign",
         });
         if (result == null) {
             return {
@@ -194,56 +192,6 @@ function assignReviewersAsync({ client, labelReviewers, contextDetails, contextP
     });
 }
 exports.assignReviewersAsync = assignReviewersAsync;
-
-
-/***/ }),
-
-/***/ 7236:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getContextPullRequestDetails = void 0;
-const github = __importStar(__nccwpck_require__(5438));
-function getContextPullRequestDetails() {
-    var _a;
-    const pullRequest = github.context.payload.pull_request;
-    if (typeof pullRequest === "undefined") {
-        return null;
-    }
-    const labels = pullRequest.labels;
-    const reviewers = pullRequest.requested_reviewers;
-    return {
-        labels: labels.map((label) => label.name),
-        reviewers: reviewers.map((reviewer) => reviewer.login),
-        baseSha: (_a = pullRequest === null || pullRequest === void 0 ? void 0 : pullRequest.base) === null || _a === void 0 ? void 0 : _a.sha,
-    };
-}
-exports.getContextPullRequestDetails = getContextPullRequestDetails;
 
 
 /***/ }),
@@ -371,35 +319,28 @@ exports.setReviewersAsync = void 0;
 function setReviewersAsync(options) {
     return __awaiter(this, void 0, void 0, function* () {
         const payload = options.contextPayload;
-        const pullRequest = payload.pull_request;
+        const prNumber = options.pullRequestDetails.prNumber;
         const repository = payload.repository;
-        if (typeof pullRequest === "undefined" || typeof repository === "undefined") {
+        if (prNumber === undefined || repository === undefined) {
             throw new Error("Cannot resolve action context");
         }
         if (options.reviewers.length === 0) {
             return null;
         }
         const repoOwner = repository.owner.login;
-        const pullNumber = pullRequest.number;
+        const pullNumber = prNumber;
         const repo = repository.name;
-        const prOwner = pullRequest.user.login;
+        const prOwner = options.pullRequestDetails.owner;
         const reviewers = options.reviewers.filter((reviewer) => reviewer !== prOwner);
         if (reviewers.length === 0) {
             return null;
         }
-        const result = options.action === "assign"
-            ? yield options.client.rest.pulls.requestReviewers({
-                owner: repoOwner,
-                repo,
-                pull_number: pullNumber,
-                reviewers,
-            })
-            : yield options.client.rest.pulls.removeRequestedReviewers({
-                owner: repoOwner,
-                repo,
-                pull_number: pullNumber,
-                reviewers,
-            });
+        const result = yield options.client.rest.pulls.requestReviewers({
+            owner: repoOwner,
+            repo,
+            pull_number: pullNumber,
+            reviewers,
+        });
         return {
             url: result.url,
         };
@@ -448,7 +389,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getChangedFiles = exports.getPrNumber = exports.fetchContent = void 0;
+exports.getPrReviewersAndAssignees = exports.getChangedFiles = exports.getPrNumber = exports.fetchContent = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
 function fetchContent(client, repoPath) {
@@ -463,12 +404,33 @@ function fetchContent(client, repoPath) {
     });
 }
 exports.fetchContent = fetchContent;
-function getPrNumber() {
-    const pullRequest = github.context.payload.pull_request;
-    if (!pullRequest) {
-        return undefined;
-    }
-    return pullRequest.number;
+function getPrNumber(client) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const pullRequest = github.context.payload.pull_request;
+            if (pullRequest) {
+                return pullRequest.number;
+            }
+            const result = yield client.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                commit_sha: github.context.sha,
+            });
+            const pr = result.data
+                .filter((el) => el.state === "open")
+                .find((el) => {
+                return github.context.payload.ref === `refs/heads/${el.head.ref}`;
+            });
+            if (pr !== undefined) {
+                core.info(`📄 Linked PR: ${pr.number} | ${pr.title}`);
+            }
+            return pr === null || pr === void 0 ? void 0 : pr.number;
+        }
+        catch (error) {
+            core.error(`🚨 Failed to get PR number: ${error}`);
+            return undefined;
+        }
+    });
 }
 exports.getPrNumber = getPrNumber;
 function getChangedFiles(client, prNumber) {
@@ -477,9 +439,11 @@ function getChangedFiles(client, prNumber) {
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             pull_number: prNumber,
+            per_page: 100,
         });
         const listFilesResponse = yield client.paginate(listFilesOptions);
         const changedFiles = listFilesResponse.map((f) => f.filename);
+        // TODO: loop when more than 30 files changed
         if (changedFiles.length > 0) {
             core.info("📄 Changed files");
             for (const file of changedFiles) {
@@ -490,6 +454,32 @@ function getChangedFiles(client, prNumber) {
     });
 }
 exports.getChangedFiles = getChangedFiles;
+function getPrReviewersAndAssignees(client, prNumber) {
+    var _a, _b;
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const pullRequest = yield client.rest.pulls.get({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                pull_number: prNumber,
+            });
+            const labels = pullRequest.data.labels;
+            const reviewers = pullRequest.data.requested_reviewers;
+            return {
+                prNumber: prNumber,
+                labels: labels.map((label) => label.name),
+                reviewers: reviewers.map((reviewer) => reviewer.login),
+                baseSha: (_a = pullRequest.data.base) === null || _a === void 0 ? void 0 : _a.sha,
+                owner: (_b = pullRequest.data.user) === null || _b === void 0 ? void 0 : _b.login,
+            };
+        }
+        catch (error) {
+            core.error(`🚨 Failed to get PR details: ${error}`);
+            return undefined;
+        }
+    });
+}
+exports.getPrReviewersAndAssignees = getPrReviewersAndAssignees;
 
 
 /***/ }),
@@ -565,7 +555,7 @@ function runLabeler(client, configPath, prNumber) {
             }
         }
         catch (error) {
-            core.error(error);
+            core.error(`  🚨 ${error}`);
             core.setFailed(error.message);
         }
     });
@@ -730,18 +720,22 @@ const assigner_1 = __nccwpck_require__(3463);
 const owner_1 = __nccwpck_require__(7612);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const prNumber = helpers.getPrNumber();
+        const token = core.getInput("token", { required: true });
+        const configPath = core.getInput("configuration-path", { required: true });
+        const client = github.getOctokit(token);
+        const prNumber = yield helpers.getPrNumber(client);
         if (!prNumber) {
             console.log("Could not get pull request number from context, exiting");
             return;
         }
-        const token = core.getInput("token", { required: true });
-        const configPath = core.getInput("configuration-path", { required: true });
-        const client = github.getOctokit(token);
         core.info(`📄 Pull Request Number: ${prNumber}`);
+        core.info(`🏭 Running labeler for ${prNumber}`);
         yield (0, labeler_1.runLabeler)(client, configPath, prNumber);
-        yield (0, assigner_1.runAssigner)(client, configPath);
+        core.info(`🏭 Running assigner for ${prNumber}`);
+        yield (0, assigner_1.runAssigner)(client, configPath, prNumber);
+        core.info(`🏭 Running owner for ${prNumber}`);
         yield (0, owner_1.runOwner)(client, prNumber);
+        core.info(`📄 Finsihed for ${prNumber}`);
     });
 }
 exports.run = run;
