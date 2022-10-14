@@ -44,7 +44,7 @@ export async function runLabeler(
       await addLabels(client, prNumber, labels);
     }
   } catch (error: any) {
-    core.error(error);
+    core.error(`  🚨 ${error}`);
     core.setFailed(error.message);
   }
 }

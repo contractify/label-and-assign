@@ -586,7 +586,7 @@ function runLabeler(client, configPath, prNumber) {
             }
         }
         catch (error) {
-            core.error(error);
+            core.error(`  🚨 ${error}`);
             core.setFailed(error.message);
         }
     });
@@ -760,9 +760,13 @@ function run() {
             return;
         }
         core.info(`📄 Pull Request Number: ${prNumber}`);
+        core.info(`📄 Running labeler for ${prNumber}`);
         yield (0, labeler_1.runLabeler)(client, configPath, prNumber);
+        core.info(`📄 Running assigner for ${prNumber}`);
         yield (0, assigner_1.runAssigner)(client, configPath);
+        core.info(`📄 Running owner for ${prNumber}`);
         yield (0, owner_1.runOwner)(client, prNumber);
+        core.info(`📄 Finsihed for ${prNumber}`);
     });
 }
 exports.run = run;

@@ -20,9 +20,16 @@ export async function run() {
 
   core.info(`📄 Pull Request Number: ${prNumber}`);
 
+  core.info(`📄 Running labeler for ${prNumber}`);
   await runLabeler(client, configPath, prNumber);
+
+  core.info(`📄 Running assigner for ${prNumber}`);
   await runAssigner(client, configPath);
+
+  core.info(`📄 Running owner for ${prNumber}`);
   await runOwner(client, prNumber);
+
+  core.info(`📄 Finsihed for ${prNumber}`);
 }
 
 run();
