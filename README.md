@@ -54,8 +54,7 @@ assign:
 name: PR Automation
 
 on:
-  pull_request:
-    types: [opened, ready_for_review, reopened, synchronize]
+  [ push ]
 
 permissions:
   contents: write
@@ -67,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Assign Labels and Users
-      uses: pieterclaerhout/label-and-assign@3015dc69ef33f6b6c0de777e960c3935053b35f7
+      uses: pieterclaerhout/label-and-assign@v1.1.0
       if: ${{ !startsWith(github.ref, 'refs/heads/dependabot/') }}
       with:
         repo-token: "${{ secrets.GITHUB_TOKEN }}"
