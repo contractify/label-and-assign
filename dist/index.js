@@ -172,10 +172,11 @@ function assignReviewersAsync({ client, labelReviewers, contextDetails, contextP
             };
         }
         const result = yield (0, setReviewersAsync_1.setReviewersAsync)({
-            client,
+            client: client,
             reviewers: reviewersToAssign,
-            contextPayload,
-            action: "assign",
+            contextPayload: contextPayload,
+            pullRequestDetails: contextDetails,
+            // action: "assign",
         });
         if (result == null) {
             return {
@@ -318,35 +319,28 @@ exports.setReviewersAsync = void 0;
 function setReviewersAsync(options) {
     return __awaiter(this, void 0, void 0, function* () {
         const payload = options.contextPayload;
-        const pullRequest = payload.pull_request;
+        const prNumber = options.pullRequestDetails.prNumber;
         const repository = payload.repository;
-        if (typeof pullRequest === "undefined" || typeof repository === "undefined") {
+        if (prNumber === undefined || repository === undefined) {
             throw new Error("Cannot resolve action context");
         }
         if (options.reviewers.length === 0) {
             return null;
         }
         const repoOwner = repository.owner.login;
-        const pullNumber = pullRequest.number;
+        const pullNumber = prNumber;
         const repo = repository.name;
-        const prOwner = pullRequest.user.login;
+        const prOwner = options.pullRequestDetails.owner;
         const reviewers = options.reviewers.filter((reviewer) => reviewer !== prOwner);
         if (reviewers.length === 0) {
             return null;
         }
-        const result = options.action === "assign"
-            ? yield options.client.rest.pulls.requestReviewers({
-                owner: repoOwner,
-                repo,
-                pull_number: pullNumber,
-                reviewers,
-            })
-            : yield options.client.rest.pulls.removeRequestedReviewers({
-                owner: repoOwner,
-                repo,
-                pull_number: pullNumber,
-                reviewers,
-            });
+        const result = yield options.client.rest.pulls.requestReviewers({
+            owner: repoOwner,
+            repo,
+            pull_number: pullNumber,
+            reviewers,
+        });
         return {
             url: result.url,
         };
@@ -461,7 +455,7 @@ function getChangedFiles(client, prNumber) {
 }
 exports.getChangedFiles = getChangedFiles;
 function getPrReviewersAndAssignees(client, prNumber) {
-    var _a;
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const pullRequest = yield client.rest.pulls.get({
@@ -476,6 +470,7 @@ function getPrReviewersAndAssignees(client, prNumber) {
                 labels: labels.map((label) => label.name),
                 reviewers: reviewers.map((reviewer) => reviewer.login),
                 baseSha: (_a = pullRequest.data.base) === null || _a === void 0 ? void 0 : _a.sha,
+                owner: (_b = pullRequest.data.user) === null || _b === void 0 ? void 0 : _b.login,
             };
         }
         catch (error) {

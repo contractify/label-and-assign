@@ -7,6 +7,7 @@ export type PullRequestDetails = {
   labels: string[];
   reviewers: string[];
   baseSha: string;
+  owner: string | undefined;
 };
 
 export interface GithubLabel {

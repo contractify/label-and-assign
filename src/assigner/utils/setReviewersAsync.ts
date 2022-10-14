@@ -6,17 +6,17 @@ interface Options {
   client: common.ClientType;
   reviewers: string[];
   contextPayload: WebhookPayload;
-  action?: "assign" | "unassign";
+  pullRequestDetails: common.PullRequestDetails;
 }
 
 export async function setReviewersAsync(
   options: Options
 ): Promise<{ url: string } | null> {
   const payload = options.contextPayload;
-  const pullRequest = payload.pull_request;
+  const prNumber = options.pullRequestDetails.prNumber;
   const repository = payload.repository;
 
-  if (typeof pullRequest === "undefined" || typeof repository === "undefined") {
+  if (prNumber === undefined || repository === undefined) {
     throw new Error("Cannot resolve action context");
   }
 
@@ -25,10 +25,9 @@ export async function setReviewersAsync(
   }
 
   const repoOwner = repository.owner.login;
-  const pullNumber = pullRequest.number;
+  const pullNumber = prNumber;
   const repo = repository.name;
-
-  const prOwner = pullRequest.user.login;
+  const prOwner = options.pullRequestDetails.owner;
 
   const reviewers = options.reviewers.filter(
     (reviewer) => reviewer !== prOwner
@@ -38,20 +37,12 @@ export async function setReviewersAsync(
     return null;
   }
 
-  const result =
-    options.action === "assign"
-      ? await options.client.rest.pulls.requestReviewers({
-          owner: repoOwner,
-          repo,
-          pull_number: pullNumber,
-          reviewers,
-        })
-      : await options.client.rest.pulls.removeRequestedReviewers({
-          owner: repoOwner,
-          repo,
-          pull_number: pullNumber,
-          reviewers,
-        });
+  const result = await options.client.rest.pulls.requestReviewers({
+    owner: repoOwner,
+    repo,
+    pull_number: pullNumber,
+    reviewers,
+  });
 
   return {
     url: result.url,

@@ -97,6 +97,7 @@ export async function getPrReviewersAndAssignees(
       labels: labels.map((label) => label.name),
       reviewers: reviewers.map((reviewer) => reviewer.login),
       baseSha: pullRequest.data.base?.sha,
+      owner: pullRequest.data.user?.login,
     };
   } catch (error: any) {
     core.error(`🚨 Failed to get PR details: ${error}`);

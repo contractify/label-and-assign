@@ -54,10 +54,11 @@ export async function assignReviewersAsync({
   }
 
   const result = await setReviewersAsync({
-    client,
+    client: client,
     reviewers: reviewersToAssign,
-    contextPayload,
-    action: "assign",
+    contextPayload: contextPayload,
+    pullRequestDetails: contextDetails,
+    // action: "assign",
   });
 
   if (result == null) {
