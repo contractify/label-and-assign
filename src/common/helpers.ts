@@ -58,10 +58,13 @@ export async function getChangedFiles(
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     pull_number: prNumber,
+    per_page: 100,
   });
 
   const listFilesResponse = await client.paginate(listFilesOptions);
   const changedFiles = listFilesResponse.map((f: any) => f.filename);
+
+  // TODO: loop when more than 30 files changed
 
   if (changedFiles.length > 0) {
     core.info("📄 Changed files");
