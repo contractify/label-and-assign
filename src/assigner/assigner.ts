@@ -52,10 +52,10 @@ export async function runAssigner(
       return;
     }
 
-    core.info(`📄 ${assignedResult.message}`);
+    core.info(`    ${assignedResult.message}`);
     if (assignedResult.data) {
       for (const reviewer of assignedResult.data?.reviewers) {
-        core.info(` 📄 Assigning reviewer: ${reviewer}`);
+        core.info(`    Assigning reviewer: ${reviewer}`);
       }
     }
   } catch (error) {

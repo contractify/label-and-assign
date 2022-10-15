@@ -10,7 +10,7 @@ export async function runOwner(client: common.ClientType, prNumber: number) {
 
     const assignees = getAssigneeOrAssignees(context);
     if (assignees.length > 0) {
-      core.info(`🚨 Pull request is already assigned`);
+      core.info(`    🚨 Pull request is already assigned`);
       return;
     }
 
@@ -21,9 +21,9 @@ export async function runOwner(client: common.ClientType, prNumber: number) {
       assignees: [context?.actor],
     });
 
-    core.info(`📄 Assigning owner: ${context?.actor}`);
+    core.info(`    Assigning owner: ${context?.actor}`);
   } catch (error: any) {
-    core.error(`  🚨 ${error}`);
+    core.error(`    🚨 ${error}`);
     core.setFailed(error.message);
   }
 }

@@ -14,11 +14,11 @@ export async function run() {
 
   const prNumber = await helpers.getPrNumber(client);
   if (!prNumber) {
-    console.log("Could not get pull request number from context, exiting");
+    core.warning("⚠️ Could not get pull request number, exiting");
     return;
   }
 
-  core.info(`📄 Pull Request Number: ${prNumber}`);
+  core.info(`📄 Pull request number: ${prNumber}`);
 
   core.info(`🏭 Running labeler for ${prNumber}`);
   await runLabeler(client, configPath, prNumber);
@@ -29,7 +29,7 @@ export async function run() {
   core.info(`🏭 Running owner for ${prNumber}`);
   await runOwner(client, prNumber);
 
-  core.info(`📄 Finished for ${prNumber}`);
+  core.info(`📄 Finished for pull request ${prNumber}`);
 }
 
 run();

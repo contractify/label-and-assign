@@ -39,12 +39,12 @@ export async function runLabeler(
     if (labels.length > 0) {
       core.info(`📄 Adding labels`);
       for (const label of labels) {
-        core.info(` 📄 Adding label: ${label}`);
+        core.info(`    Adding label: ${label}`);
       }
       await addLabels(client, prNumber, labels);
     }
   } catch (error: any) {
-    core.error(`  🚨 ${error}`);
+    core.error(`    🚨 ${error}`);
     core.setFailed(error.message);
   }
 }

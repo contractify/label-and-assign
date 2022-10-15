@@ -71,7 +71,7 @@ export async function getChangedFiles(
   if (changedFiles.length > 0) {
     core.info("📄 Changed files");
     for (const file of changedFiles) {
-      core.info(`  📄 Changed file: ${file}`);
+      core.info(`    Changed file: ${file}`);
     }
   }
 

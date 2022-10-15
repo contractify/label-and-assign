@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Assign Labels and Users
-      uses: contractify/label-and-assign@v1.1.0
+      uses: contractify/label-and-assign@v2
       if: ${{ !startsWith(github.ref, 'refs/heads/dependabot/') }}
       with:
         token: "${{ secrets.GITHUB_TOKEN }}"

@@ -74,10 +74,10 @@ function runAssigner(client, configPath, prNumber) {
                 core.setFailed(assignedResult.message);
                 return;
             }
-            core.info(`📄 ${assignedResult.message}`);
+            core.info(`    ${assignedResult.message}`);
             if (assignedResult.data) {
                 for (const reviewer of (_a = assignedResult.data) === null || _a === void 0 ? void 0 : _a.reviewers) {
-                    core.info(` 📄 Assigning reviewer: ${reviewer}`);
+                    core.info(`    Assigning reviewer: ${reviewer}`);
                 }
             }
         }
@@ -447,7 +447,7 @@ function getChangedFiles(client, prNumber) {
         if (changedFiles.length > 0) {
             core.info("📄 Changed files");
             for (const file of changedFiles) {
-                core.info(`  📄 Changed file: ${file}`);
+                core.info(`    Changed file: ${file}`);
             }
         }
         return changedFiles;
@@ -549,13 +549,13 @@ function runLabeler(client, configPath, prNumber) {
             if (labels.length > 0) {
                 core.info(`📄 Adding labels`);
                 for (const label of labels) {
-                    core.info(` 📄 Adding label: ${label}`);
+                    core.info(`    Adding label: ${label}`);
                 }
                 yield addLabels(client, prNumber, labels);
             }
         }
         catch (error) {
-            core.error(`  🚨 ${error}`);
+            core.error(`    🚨 ${error}`);
             core.setFailed(error.message);
         }
     });
@@ -725,17 +725,17 @@ function run() {
         const client = github.getOctokit(token);
         const prNumber = yield helpers.getPrNumber(client);
         if (!prNumber) {
-            console.log("Could not get pull request number from context, exiting");
+            core.warning("⚠️ Could not get pull request number, exiting");
             return;
         }
-        core.info(`📄 Pull Request Number: ${prNumber}`);
+        core.info(`📄 Pull request number: ${prNumber}`);
         core.info(`🏭 Running labeler for ${prNumber}`);
         yield (0, labeler_1.runLabeler)(client, configPath, prNumber);
         core.info(`🏭 Running assigner for ${prNumber}`);
         yield (0, assigner_1.runAssigner)(client, configPath, prNumber);
         core.info(`🏭 Running owner for ${prNumber}`);
         yield (0, owner_1.runOwner)(client, prNumber);
-        core.info(`📄 Finsihed for ${prNumber}`);
+        core.info(`📄 Finished for pull request ${prNumber}`);
     });
 }
 exports.run = run;
@@ -792,7 +792,7 @@ function runOwner(client, prNumber) {
             const context = github === null || github === void 0 ? void 0 : github.context;
             const assignees = getAssigneeOrAssignees(context);
             if (assignees.length > 0) {
-                core.info(`🚨 Pull request is already assigned`);
+                core.info(`    🚨 Pull request is already assigned`);
                 return;
             }
             yield client.rest.issues.addAssignees({
@@ -801,10 +801,10 @@ function runOwner(client, prNumber) {
                 issue_number: prNumber,
                 assignees: [context === null || context === void 0 ? void 0 : context.actor],
             });
-            core.info(`📄 Assigning owner: ${context === null || context === void 0 ? void 0 : context.actor}`);
+            core.info(`    Assigning owner: ${context === null || context === void 0 ? void 0 : context.actor}`);
         }
         catch (error) {
-            core.error(`  🚨 ${error}`);
+            core.error(`    🚨 ${error}`);
             core.setFailed(error.message);
         }
     });
