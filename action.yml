@@ -11,7 +11,7 @@ inputs:
 
 branding:
   icon: user
-  color: yellow
+  color: green
 
 runs:
   using: 'node16'
