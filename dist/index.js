@@ -435,15 +435,23 @@ function getPrNumber(client) {
 exports.getPrNumber = getPrNumber;
 function getChangedFiles(client, prNumber) {
     return __awaiter(this, void 0, void 0, function* () {
-        const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            pull_number: prNumber,
-            per_page: 100,
-        });
-        const listFilesResponse = yield client.paginate(listFilesOptions);
-        const changedFiles = listFilesResponse.map((f) => f.filename);
-        // TODO: loop when more than 30 files changed
+        var changedFiles = [];
+        var page = 0;
+        while (true) {
+            page++;
+            const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                pull_number: prNumber,
+                page: page,
+                per_page: 100,
+            });
+            const listFilesResponse = yield client.paginate(listFilesOptions);
+            listFilesResponse.forEach((f) => changedFiles.push(f.filename));
+            if (listFilesResponse.length < 100) {
+                break;
+            }
+        }
         if (changedFiles.length > 0) {
             core.info("📄 Changed files");
             for (const file of changedFiles) {

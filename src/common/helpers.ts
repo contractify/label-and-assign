@@ -56,17 +56,23 @@ export async function getChangedFiles(
   client: common.ClientType,
   prNumber: number
 ): Promise<string[]> {
-  const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    pull_number: prNumber,
-    per_page: 100,
-  });
-
-  const listFilesResponse = await client.paginate(listFilesOptions);
-  const changedFiles = listFilesResponse.map((f: any) => f.filename);
-
-  // TODO: loop when more than 30 files changed
+  var changedFiles: string[] = [];
+  var page = 0;
+  while (true) {
+    page++;
+    const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      pull_number: prNumber,
+      page: page,
+      per_page: 100,
+    });
+    const listFilesResponse = await client.paginate(listFilesOptions);
+    listFilesResponse.forEach((f: any) => changedFiles.push(f.filename));
+    if (listFilesResponse.length < 100) {
+      break;
+    }
+  }
 
   if (changedFiles.length > 0) {
     core.info("📄 Changed files");
