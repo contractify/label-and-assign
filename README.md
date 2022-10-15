@@ -117,12 +117,21 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 
 ## In Detail
 
+### Order of the actions
+
 The action always runs the steps in the following order:
 
 1. Detect which files are changed
 2. Assign the labels based on the changed files
 3. Assign the reviewers based on the labels
 4. Assign the owner if not present yet
+
+### Detection of the changed files
+
+You might notice that there is no `checkout` step in the workflow. This is done
+on purpose as the list of changed files is extracted from the pull request
+details using the GitHub API. This is much faster than having to do a full
+checkout of your repository.
 
 ## About Contractify
 
