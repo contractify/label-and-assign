@@ -1,8 +1,30 @@
 # Pull Request Label and Assign
 
-Automatically label and assign new pull requests based on the paths of files being changed.
+Add [Contractify](https://contractify.io), we like to keeps things nice, tidy and
+organized. We are using [Jira](https://www.atlassian.com/nl/software/jira) for
+our issue management and [GitHub](https://www.github.com) for our version control.
 
-## Usage
+Since we are keen on reducing the manual work related to pull requests, we
+created a [GitHub action](https://github.com/features/actions) that helps us in
+assigning labels, reviewers and owners to a pull request, based on the files
+changed in the pull request.
+
+The current version allows you to:
+
+- Assign labels based on file patterns
+- Assign reviewers based on labels
+- Assign the sender of the pull request as the owner (we don't like pull
+  requests which are owned by nobody)
+
+## Sample action setup
+
+To get started, you will need to create a GitHub action workflow file. If you
+need more information on how to set that up, check
+[here](https://docs.github.com/en/actions/quickstart).
+
+In our repositories, we keep these actions in a separate workflow, so we usually
+add a file called `.github/workflows/automation.yml` to our repository and put
+the following content in there:
 
 ### Create `.github/label-and-assign.yml`
 
@@ -48,7 +70,19 @@ assign:
   - user4
 ```
 
-### Sample workflow
+This file contains the mapping of the labels against the file patterns and the
+reviewers based on the labels.
+
+### Create the workflow file
+
+You will need to create a GitHub action workflow file. If you
+need more information on how to set that up, check
+[here](https://docs.github.com/en/actions/quickstart).
+
+In our repositories, we keep these actions in a separate workflow, so we usually
+add a file called `.github/workflows/automation.yml` to our repository and put
+the following content in there:
+
 
 ```yaml
 name: PR Automation
@@ -66,13 +100,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Assign Labels and Users
-      uses: contractify/label-and-assign@v2.0.0
+      uses: contractify/label-and-assign@v2.1.0
       if: ${{ !startsWith(github.ref, 'refs/heads/dependabot/') }}
       with:
         token: "${{ secrets.GITHUB_TOKEN }}"
 ```
 
-#### Inputs
+## Inputs
 
 Various inputs are defined in [`action.yml`](action.yml) to let you configure the actions:
 
@@ -80,3 +114,31 @@ Various inputs are defined in [`action.yml`](action.yml) to let you configure th
 | - | - | - |
 | `token` | Token to use to authorize label changes. Typically the GITHUB_TOKEN secret, with `contents:read` and `pull-requests:write` access | N/A |
 | `configuration-path` | The path to the label configuration file | `.github/labeler.yml` |
+
+## In Detail
+
+The action always runs the steps in the following order:
+
+1. Detect which files are changed
+2. Assign the labels based on the changed files
+3. Assign the reviewers based on the labels
+4. Assign the owner if not present yet
+
+## About Contractify
+
+Contractify is a blooming Belgian SaaS scale-up offering contract management software and services.
+
+We help business leaders, legal & finance teams to
+- 🗄️ centralize contracts & responsibilities, even in a decentralized organization.
+- 📝 keep track of all contracts & related mails or documents in 1 tool
+- 🔔 automate & collaborate on contract follow-up tasks
+- ✒️ approve & sign documents safely & fast
+- 📊 report on custom contract data
+
+The cloud platform is easily supplemented with full contract management support, including:
+- ✔️ registration and follow up of your existing & new contracts
+- ✔️ expert advice on contract management
+- ✔️ periodic reporting & status updates
+
+Start automating your contract management for free with Contractify on:
+https://info.contractify.io/free-trial
