@@ -1,6 +1,6 @@
 name: 'Label and Assign'
 description: 'Automatically label and assign new pull requests based on the paths of files being changed'
-author: 'GitHub'
+author: 'Contractify'
 inputs:
   token:
     description: 'The GITHUB_TOKEN secret'
