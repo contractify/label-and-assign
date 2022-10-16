@@ -20,7 +20,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
     - name: Add Jira issue type as label
-      uses: contractify/add-jira-info@v1.0.0
+      uses: contractify/add-jira-info@v1
       if: ${{ !startsWith(github.ref, 'refs/heads/dependabot/') }}
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
