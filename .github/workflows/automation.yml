@@ -17,6 +17,8 @@ jobs:
   automation:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout
+      uses: actions/checkout@v3
     - name: Add Jira issue type as label
       uses: contractify/add-jira-info@v1.0.0
       if: ${{ !startsWith(github.ref, 'refs/heads/dependabot/') }}
@@ -28,7 +30,7 @@ jobs:
         jira-project-key: CTR
 
     - name: Assign labels, reviewers and owner
-      uses: contractify/label-and-assign@main
+      uses: ./
       if: ${{ !startsWith(github.ref, 'refs/heads/dependabot/') }}
       with:
         token: "${{ secrets.GITHUB_TOKEN }}"
