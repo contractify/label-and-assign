@@ -388,6 +388,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getPrReviewersAndAssignees = exports.getChangedFiles = exports.getPrNumber = exports.fetchContent = void 0;
 const github = __importStar(__nccwpck_require__(5438));
@@ -434,24 +441,46 @@ function getPrNumber(client) {
 }
 exports.getPrNumber = getPrNumber;
 function getChangedFiles(client, prNumber) {
+    var e_1, _a;
     return __awaiter(this, void 0, void 0, function* () {
         var changedFiles = [];
-        var page = 0;
-        while (true) {
-            page++;
-            const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
-                owner: github.context.repo.owner,
-                repo: github.context.repo.repo,
-                pull_number: prNumber,
-                page: page,
-                per_page: 100,
-            });
-            const listFilesResponse = yield client.paginate(listFilesOptions);
-            listFilesResponse.forEach((f) => changedFiles.push(f.filename));
-            if (listFilesResponse.length < 100) {
-                break;
+        const iterator = client.paginate.iterator(client.rest.pulls.listFiles, {
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            pull_number: prNumber,
+            per_page: 100,
+        });
+        try {
+            for (var iterator_1 = __asyncValues(iterator), iterator_1_1; iterator_1_1 = yield iterator_1.next(), !iterator_1_1.done;) {
+                const { data: files } = iterator_1_1.value;
+                files.forEach((f) => changedFiles.push(f.filename));
             }
         }
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (iterator_1_1 && !iterator_1_1.done && (_a = iterator_1.return)) yield _a.call(iterator_1);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        // return changedFiles;
+        // var changedFiles: string[] = [];
+        // var page = 0;
+        // while (true) {
+        //   page++;
+        //   const listFilesOptions = client.rest.pulls.listFiles.endpoint.merge({
+        //     owner: github.context.repo.owner,
+        //     repo: github.context.repo.repo,
+        //     pull_number: prNumber,
+        //     page: page,
+        //     per_page: 100,
+        //   });
+        //   const listFilesResponse = await client.paginate(listFilesOptions);
+        //   listFilesResponse.forEach((f: any) => changedFiles.push(f.filename));
+        //   if (listFilesResponse.length < 100) {
+        //     break;
+        //   }
+        // }
         if (changedFiles.length > 0) {
             core.info("📄 Changed files");
             for (const file of changedFiles) {
