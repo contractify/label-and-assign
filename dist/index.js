@@ -728,6 +728,10 @@ const assigner_1 = __nccwpck_require__(3463);
 const owner_1 = __nccwpck_require__(7612);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
+        if (github.context.actor === "dependabot[bot]") {
+            core.info(`🚨 Dependabot, ignoring`);
+            return;
+        }
         const token = core.getInput("token", { required: true });
         const configPath = core.getInput("configuration-path", { required: true });
         const client = github.getOctokit(token);
@@ -798,10 +802,6 @@ function runOwner(client, prNumber) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const context = github === null || github === void 0 ? void 0 : github.context;
-            if ((github === null || github === void 0 ? void 0 : github.context.actor) === "dependabot[bot]") {
-                core.info(`    🚨 Dependabot, ignoring`);
-                return;
-            }
             const assignees = getAssigneeOrAssignees(context);
             if (assignees.length > 0) {
                 core.info(`    🚨 Pull request is already assigned`);

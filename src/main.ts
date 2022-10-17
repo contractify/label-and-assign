@@ -8,6 +8,11 @@ import { runAssigner } from "./assigner/assigner";
 import { runOwner } from "./owner/owner";
 
 export async function run() {
+  if (github.context.actor === "dependabot[bot]") {
+    core.info(`🚨 Dependabot, ignoring`);
+    return;
+  }
+
   const token = core.getInput("token", { required: true });
   const configPath = core.getInput("configuration-path", { required: true });
   const client: common.ClientType = github.getOctokit(token);
