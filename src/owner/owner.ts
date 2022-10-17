@@ -8,6 +8,11 @@ export async function runOwner(client: common.ClientType, prNumber: number) {
   try {
     const context: Context = github?.context;
 
+    if (github?.context.actor === "dependabot[bot]") {
+      core.info(`    🚨 Dependabot, ignoring`);
+      return;
+    }
+
     const assignees = getAssigneeOrAssignees(context);
     if (assignees.length > 0) {
       core.info(`    🚨 Pull request is already assigned`);

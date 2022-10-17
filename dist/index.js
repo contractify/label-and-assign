@@ -798,6 +798,10 @@ function runOwner(client, prNumber) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const context = github === null || github === void 0 ? void 0 : github.context;
+            if ((github === null || github === void 0 ? void 0 : github.context.actor) === "dependabot[bot]") {
+                core.info(`    🚨 Dependabot, ignoring`);
+                return;
+            }
             const assignees = getAssigneeOrAssignees(context);
             if (assignees.length > 0) {
                 core.info(`    🚨 Pull request is already assigned`);
