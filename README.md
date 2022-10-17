@@ -101,7 +101,7 @@ jobs:
     steps:
     - name: Assign Labels and Users
       uses: contractify/label-and-assign@v2.1.0
-      if: ${{ !startsWith(github.ref, 'refs/heads/dependabot/') }}
+      if: ${{ github.actor != 'dependabot[bot]' }}
       with:
         token: "${{ secrets.GITHUB_TOKEN }}"
 ```
