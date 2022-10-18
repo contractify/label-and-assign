@@ -15,24 +15,33 @@ export async function run() {
 
   const token = core.getInput("token", { required: true });
   const configPath = core.getInput("configuration-path", { required: true });
-  const client: common.ClientType = github.getOctokit(token);
+  const githubClient: common.ClientType = github.getOctokit(token);
 
-  const prNumber = await helpers.getPrNumber(client);
+  const prNumber = await helpers.getPrNumber(githubClient);
   if (!prNumber) {
     core.warning("⚠️ Could not get pull request number, exiting");
+    return;
+  }
+
+  const branchName = helpers.getBranchName();
+  core.info(`📄 Context details`);
+  core.info(`    Branch name: ${branchName}`);
+
+  if (branchName.startsWith("dependabot")) {
+    core.info(`🚨 Dependabot, ignoring`);
     return;
   }
 
   core.info(`📄 Pull request number: ${prNumber}`);
 
   core.info(`🏭 Running labeler for ${prNumber}`);
-  await runLabeler(client, configPath, prNumber);
+  await runLabeler(githubClient, configPath, prNumber);
 
   core.info(`🏭 Running assigner for ${prNumber}`);
-  await runAssigner(client, configPath, prNumber);
+  await runAssigner(githubClient, configPath, prNumber);
 
   core.info(`🏭 Running owner for ${prNumber}`);
-  await runOwner(client, prNumber);
+  await runOwner(githubClient, prNumber);
 
   core.info(`📄 Finished for pull request ${prNumber}`);
 }

@@ -25,6 +25,13 @@
       "problemMatcher": [],
       "label": "npm: tests",
 			"detail": "npm run test -- --silent=false"
+		},
+		{
+			"type": "shell",
+      "problemMatcher": [],
+      "label": "git: update tag",
+      "detail": "git tag -fa v2 -m 'Update v2 tag' && git push origin v2 --force",
+      "command": "git tag -fa v2 -m 'Update v2 tag' && git push origin v2 --force"
 		}
 	]
 }

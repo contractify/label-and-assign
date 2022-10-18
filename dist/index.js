@@ -389,7 +389,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getPrReviewersAndAssignees = exports.getChangedFiles = exports.getPrNumber = exports.fetchContent = void 0;
+exports.getPrReviewersAndAssignees = exports.getChangedFiles = exports.getPrNumber = exports.getBranchName = exports.fetchContent = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
 function fetchContent(client, repoPath) {
@@ -404,6 +404,11 @@ function fetchContent(client, repoPath) {
     });
 }
 exports.fetchContent = fetchContent;
+function getBranchName() {
+    var _a;
+    return (((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.ref) || github.context.ref).replace("refs/heads/", "");
+}
+exports.getBranchName = getBranchName;
 function getPrNumber(client) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -734,19 +739,26 @@ function run() {
         }
         const token = core.getInput("token", { required: true });
         const configPath = core.getInput("configuration-path", { required: true });
-        const client = github.getOctokit(token);
-        const prNumber = yield helpers.getPrNumber(client);
+        const githubClient = github.getOctokit(token);
+        const prNumber = yield helpers.getPrNumber(githubClient);
         if (!prNumber) {
             core.warning("⚠️ Could not get pull request number, exiting");
             return;
         }
+        const branchName = helpers.getBranchName();
+        core.info(`📄 Context details`);
+        core.info(`    Branch name: ${branchName}`);
+        if (branchName.startsWith("dependabot")) {
+            core.info(`🚨 Dependabot, ignoring`);
+            return;
+        }
         core.info(`📄 Pull request number: ${prNumber}`);
         core.info(`🏭 Running labeler for ${prNumber}`);
-        yield (0, labeler_1.runLabeler)(client, configPath, prNumber);
+        yield (0, labeler_1.runLabeler)(githubClient, configPath, prNumber);
         core.info(`🏭 Running assigner for ${prNumber}`);
-        yield (0, assigner_1.runAssigner)(client, configPath, prNumber);
+        yield (0, assigner_1.runAssigner)(githubClient, configPath, prNumber);
         core.info(`🏭 Running owner for ${prNumber}`);
-        yield (0, owner_1.runOwner)(client, prNumber);
+        yield (0, owner_1.runOwner)(githubClient, prNumber);
         core.info(`📄 Finished for pull request ${prNumber}`);
     });
 }

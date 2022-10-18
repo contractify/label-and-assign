@@ -18,6 +18,12 @@ export async function fetchContent(
   return Buffer.from(response.data.content, response.data.encoding).toString();
 }
 
+export function getBranchName(): string {
+  return (
+    github.context.payload.pull_request?.head.ref || github.context.ref
+  ).replace("refs/heads/", "");
+}
+
 export async function getPrNumber(
   client: common.ClientType
 ): Promise<number | undefined> {
