@@ -16,7 +16,7 @@ export async function runAssigner(
   prNumber: number
 ): Promise<void> {
   try {
-    const prReviewersAndAssignees = await helpers.getPrReviewersAndAssignees(
+    const prReviewersAndAssignees = await helpers.getPrDetails(
       client,
       prNumber
     );

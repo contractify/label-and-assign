@@ -50,7 +50,7 @@ function runAssigner(client, configPath, prNumber) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const prReviewersAndAssignees = yield helpers.getPrReviewersAndAssignees(client, prNumber);
+            const prReviewersAndAssignees = yield helpers.getPrDetails(client, prNumber);
             if (prReviewersAndAssignees === undefined) {
                 throw new Error("No context details");
             }
@@ -395,7 +395,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getPrReviewersAndAssignees = exports.getChangedFiles = exports.getPullRequest = exports.getBranchName = exports.fetchContent = void 0;
+exports.getPrDetails = exports.getChangedFiles = exports.getPrNumber = exports.getBranchName = exports.fetchContent = void 0;
 const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
 function fetchContent(client, repoPath) {
@@ -415,34 +415,34 @@ function getBranchName() {
     return (((_a = github.context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.head.ref) || github.context.ref).replace("refs/heads/", "");
 }
 exports.getBranchName = getBranchName;
-function getPullRequest(client) {
-    var _a, _b, _c;
+function getPrNumber(client) {
     return __awaiter(this, void 0, void 0, function* () {
-        const result = yield client.rest.repos.listPullRequestsAssociatedWithCommit({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            commit_sha: github.context.sha,
-        });
-        const pr = result.data
-            .filter((el) => el.state === "open")
-            .find((el) => {
-            return github.context.payload.ref === `refs/heads/${el.head.ref}`;
-        });
-        if (pr === undefined) {
-            return undefined;
+        try {
+            const pullRequest = github.context.payload.pull_request;
+            if (pullRequest) {
+                return pullRequest.number;
+            }
+            const result = yield client.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                commit_sha: github.context.sha,
+            });
+            const pr = result.data
+                .filter((el) => el.state === "open")
+                .find((el) => {
+                return github.context.payload.ref === `refs/heads/${el.head.ref}`;
+            });
+            if (pr !== undefined) {
+                core.info(`📄 Linked PR: ${pr.number} | ${pr.title}`);
+            }
+            return pr === null || pr === void 0 ? void 0 : pr.number;
         }
-        return {
-            prNumber: pr.number,
-            title: pr.title,
-            labels: pr.labels.map((item) => item.name),
-            reviewers: (_b = (_a = pr.requested_reviewers) === null || _a === void 0 ? void 0 : _a.filter((reviewer) => reviewer.name !== null && reviewer.name !== undefined).map((reviewer) => { var _a; return (_a = reviewer.name) !== null && _a !== void 0 ? _a : ""; })) !== null && _b !== void 0 ? _b : [],
-            baseSha: pr.base.sha,
-            owner: (_c = pr.assignee) === null || _c === void 0 ? void 0 : _c.name,
-            draft: pr.draft,
-        };
+        catch (error) {
+            core.error(`🚨 Failed to get PR number: ${error}`);
+        }
     });
 }
-exports.getPullRequest = getPullRequest;
+exports.getPrNumber = getPrNumber;
 function getChangedFiles(client, prNumber) {
     return __awaiter(this, void 0, void 0, function* () {
         var changedFiles = [];
@@ -472,7 +472,7 @@ function getChangedFiles(client, prNumber) {
     });
 }
 exports.getChangedFiles = getChangedFiles;
-function getPrReviewersAndAssignees(client, prNumber) {
+function getPrDetails(client, prNumber) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -499,7 +499,7 @@ function getPrReviewersAndAssignees(client, prNumber) {
         }
     });
 }
-exports.getPrReviewersAndAssignees = getPrReviewersAndAssignees;
+exports.getPrDetails = getPrDetails;
 
 
 /***/ }),
@@ -747,8 +747,8 @@ function run() {
         const token = core.getInput("token", { required: true });
         const configPath = core.getInput("configuration-path", { required: true });
         const githubClient = github.getOctokit(token);
-        const pr = yield helpers.getPullRequest(githubClient);
-        if (!(pr === null || pr === void 0 ? void 0 : pr.prNumber)) {
+        const prNumber = yield helpers.getPrNumber(githubClient);
+        if (!prNumber) {
             core.warning("⚠️ Could not get pull request number, exiting");
             return;
         }
@@ -759,19 +759,20 @@ function run() {
             core.info(`🚨 Dependabot, ignoring`);
             return;
         }
-        core.info(`📄 Pull request number: ${pr.prNumber}`);
-        core.info(`🏭 Running labeler for ${pr.prNumber}`);
-        yield (0, labeler_1.runLabeler)(githubClient, configPath, pr.prNumber);
-        if (pr.draft) {
-            core.info(`🏭 Skipping assigner for ${pr.prNumber} (draft)`);
+        core.info(`📄 Pull request number: ${prNumber}`);
+        const pr = yield helpers.getPrDetails(githubClient, prNumber);
+        core.info(`🏭 Running labeler for ${prNumber}`);
+        yield (0, labeler_1.runLabeler)(githubClient, configPath, prNumber);
+        if (pr === null || pr === void 0 ? void 0 : pr.draft) {
+            core.info(`🏭 Skipping assigner for ${prNumber} (draft)`);
         }
         else {
-            core.info(`🏭 Running assigner for ${pr.prNumber}`);
-            yield (0, assigner_1.runAssigner)(githubClient, configPath, pr.prNumber);
+            core.info(`🏭 Running assigner for ${prNumber}`);
+            yield (0, assigner_1.runAssigner)(githubClient, configPath, prNumber);
         }
-        core.info(`🏭 Running owner for ${pr.prNumber}`);
-        yield (0, owner_1.runOwner)(githubClient, pr.prNumber);
-        core.info(`📄 Finished for pull request ${pr.prNumber}`);
+        core.info(`🏭 Running owner for ${prNumber}`);
+        yield (0, owner_1.runOwner)(githubClient, prNumber);
+        core.info(`📄 Finished for pull request ${prNumber}`);
     });
 }
 exports.run = run;

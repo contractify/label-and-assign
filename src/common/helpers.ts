@@ -24,39 +24,37 @@ export function getBranchName(): string {
   ).replace("refs/heads/", "");
 }
 
-export async function getPullRequest(
+export async function getPrNumber(
   client: common.ClientType
-): Promise<common.PullRequestDetails | undefined> {
-  const result = await client.rest.repos.listPullRequestsAssociatedWithCommit({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    commit_sha: github.context.sha,
-  });
+): Promise<number | undefined> {
+  try {
+    const pullRequest = github.context.payload.pull_request;
+    if (pullRequest) {
+      return pullRequest.number;
+    }
 
-  const pr = result.data
-    .filter((el) => el.state === "open")
-    .find((el) => {
-      return github.context.payload.ref === `refs/heads/${el.head.ref}`;
-    });
+    const result = await client.rest.repos.listPullRequestsAssociatedWithCommit(
+      {
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        commit_sha: github.context.sha,
+      }
+    );
 
-  if (pr === undefined) {
-    return undefined;
+    const pr = result.data
+      .filter((el) => el.state === "open")
+      .find((el) => {
+        return github.context.payload.ref === `refs/heads/${el.head.ref}`;
+      });
+
+    if (pr !== undefined) {
+      core.info(`📄 Linked PR: ${pr.number} | ${pr.title}`);
+    }
+
+    return pr?.number;
+  } catch (error: any) {
+    core.error(`🚨 Failed to get PR number: ${error}`);
   }
-
-  return {
-    prNumber: pr.number,
-    title: pr.title,
-    labels: pr.labels.map((item) => item.name),
-    reviewers:
-      pr.requested_reviewers
-        ?.filter(
-          (reviewer) => reviewer.name !== null && reviewer.name !== undefined
-        )
-        .map((reviewer) => reviewer.name ?? "") ?? [],
-    baseSha: pr.base.sha,
-    owner: pr.assignee?.name,
-    draft: pr.draft,
-  };
 }
 
 export async function getChangedFiles(
@@ -91,7 +89,7 @@ export async function getChangedFiles(
   return changedFiles;
 }
 
-export async function getPrReviewersAndAssignees(
+export async function getPrDetails(
   client: common.ClientType,
   prNumber: number
 ): Promise<common.PullRequestDetails | undefined> {
