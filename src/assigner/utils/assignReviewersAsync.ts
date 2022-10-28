@@ -24,6 +24,13 @@ export async function assignReviewersAsync({
     };
   }
 
+  if (contextDetails.reviewers.length > 0) {
+    return {
+      status: "info",
+      message: "Already has reviewers",
+    };
+  }
+
   const labels = Object.keys(labelReviewers);
   const reviewersByLabels: string[] = [];
 

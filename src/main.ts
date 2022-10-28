@@ -17,8 +17,8 @@ export async function run() {
   const configPath = core.getInput("configuration-path", { required: true });
   const githubClient: common.ClientType = github.getOctokit(token);
 
-  const prNumber = await helpers.getPrNumber(githubClient);
-  if (!prNumber) {
+  const pr = await helpers.getPullRequest(githubClient);
+  if (!pr?.prNumber) {
     core.warning("⚠️ Could not get pull request number, exiting");
     return;
   }
@@ -32,18 +32,22 @@ export async function run() {
     return;
   }
 
-  core.info(`📄 Pull request number: ${prNumber}`);
+  core.info(`📄 Pull request number: ${pr.prNumber}`);
 
-  core.info(`🏭 Running labeler for ${prNumber}`);
-  await runLabeler(githubClient, configPath, prNumber);
+  core.info(`🏭 Running labeler for ${pr.prNumber}`);
+  await runLabeler(githubClient, configPath, pr.prNumber);
 
-  core.info(`🏭 Running assigner for ${prNumber}`);
-  await runAssigner(githubClient, configPath, prNumber);
+  if (pr.draft) {
+    core.info(`🏭 Skipping assigner for ${pr.prNumber} (draft)`);
+  } else {
+    core.info(`🏭 Running assigner for ${pr.prNumber}`);
+    await runAssigner(githubClient, configPath, pr.prNumber);
+  }
 
-  core.info(`🏭 Running owner for ${prNumber}`);
-  await runOwner(githubClient, prNumber);
+  core.info(`🏭 Running owner for ${pr.prNumber}`);
+  await runOwner(githubClient, pr.prNumber);
 
-  core.info(`📄 Finished for pull request ${prNumber}`);
+  core.info(`📄 Finished for pull request ${pr.prNumber}`);
 }
 
 run();

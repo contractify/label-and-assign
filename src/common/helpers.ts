@@ -24,38 +24,39 @@ export function getBranchName(): string {
   ).replace("refs/heads/", "");
 }
 
-export async function getPrNumber(
+export async function getPullRequest(
   client: common.ClientType
-): Promise<number | undefined> {
-  try {
-    const pullRequest = github.context.payload.pull_request;
-    if (pullRequest) {
-      return pullRequest.number;
-    }
+): Promise<common.PullRequestDetails | undefined> {
+  const result = await client.rest.repos.listPullRequestsAssociatedWithCommit({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    commit_sha: github.context.sha,
+  });
 
-    const result = await client.rest.repos.listPullRequestsAssociatedWithCommit(
-      {
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        commit_sha: github.context.sha,
-      }
-    );
+  const pr = result.data
+    .filter((el) => el.state === "open")
+    .find((el) => {
+      return github.context.payload.ref === `refs/heads/${el.head.ref}`;
+    });
 
-    const pr = result.data
-      .filter((el) => el.state === "open")
-      .find((el) => {
-        return github.context.payload.ref === `refs/heads/${el.head.ref}`;
-      });
-
-    if (pr !== undefined) {
-      core.info(`📄 Linked PR: ${pr.number} | ${pr.title}`);
-    }
-
-    return pr?.number;
-  } catch (error: any) {
-    core.error(`🚨 Failed to get PR number: ${error}`);
+  if (pr === undefined) {
     return undefined;
   }
+
+  return {
+    prNumber: pr.number,
+    title: pr.title,
+    labels: pr.labels.map((item) => item.name),
+    reviewers:
+      pr.requested_reviewers
+        ?.filter(
+          (reviewer) => reviewer.name !== null && reviewer.name !== undefined
+        )
+        .map((reviewer) => reviewer.name ?? "") ?? [],
+    baseSha: pr.base.sha,
+    owner: pr.assignee?.name,
+    draft: pr.draft,
+  };
 }
 
 export async function getChangedFiles(
@@ -106,10 +107,12 @@ export async function getPrReviewersAndAssignees(
 
     return {
       prNumber: prNumber,
+      title: pullRequest.data.title,
       labels: labels.map((label) => label.name),
       reviewers: reviewers.map((reviewer) => reviewer.login),
       baseSha: pullRequest.data.base?.sha,
       owner: pullRequest.data.user?.login,
+      draft: pullRequest.data.draft,
     };
   } catch (error: any) {
     core.error(`🚨 Failed to get PR details: ${error}`);
