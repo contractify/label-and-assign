@@ -741,7 +741,6 @@ const owner_1 = __nccwpck_require__(7612);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         if (github.context.actor === "dependabot[bot]") {
-            core.info(`🚨 Dependabot, ignoring`);
             return;
         }
         const token = core.getInput("token", { required: true });

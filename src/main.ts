@@ -9,7 +9,6 @@ import { runOwner } from "./owner/owner";
 
 export async function run() {
   if (github.context.actor === "dependabot[bot]") {
-    core.info(`🚨 Dependabot, ignoring`);
     return;
   }
 
