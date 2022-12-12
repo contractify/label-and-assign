@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Configure git
-        run: git config core.autocrlf false
+        run: git config --global core.autocrlf false
 
       - uses: actions/checkout@v3
 
