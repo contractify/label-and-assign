@@ -16,8 +16,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Configure git
-        run: git config --global core.autocrlf false
+      # - name: Configure git
+      #   run: |
+      #     git config --global core.autocrlf false
+      #     git config --global core.eol lf
 
       - uses: actions/checkout@v3
 
