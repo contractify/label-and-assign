@@ -31,6 +31,7 @@ jobs:
 
       - name: Compare the expected and actual dist/ directories
         run: |
+          git config core.autocrlf false
           if [ "$(git diff --ignore-space-at-eol dist/ | wc -l)" -gt "0" ]; then
             echo "Detected uncommitted changes after build.  See status below:"
             git diff
