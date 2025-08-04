@@ -1,4 +1,4 @@
-import z from "zod";
+import * as z from "zod/v3"; // Zod 3
 
 export const ConfigSchema = z.object(
   {
@@ -16,7 +16,7 @@ export const ConfigSchema = z.object(
               '"assign" labels must contain an array of reviewers',
             invalid_type_error:
               '"assign" labels must contain an array of reviewers',
-          }
+          },
         )
         .min(1, '"assign" must have at least one reviewer'),
       {
@@ -24,13 +24,13 @@ export const ConfigSchema = z.object(
           '"assign" must be an object with the label as the key and the reviewers as an array',
         invalid_type_error:
           '"assign" be an object with the label as the key and the reviewers as an array',
-      }
+      },
     ),
   },
   {
     required_error: 'Config must have an "assign" object of labels',
     invalid_type_error: 'Config must have an "assign" object of labels',
-  }
+  },
 );
 
 export type Config = z.infer<typeof ConfigSchema>;
