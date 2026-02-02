@@ -1,8 +1,8 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
-import { Context } from "@actions/github/lib/context";
-
 import * as common from "../common/common";
+
+type Context = typeof github.context;
 
 export async function runOwner(client: common.ClientType, prNumber: number) {
   try {
