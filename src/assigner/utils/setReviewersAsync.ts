@@ -1,6 +1,7 @@
-import { WebhookPayload } from "@actions/github/lib/interfaces";
-
+import { context } from "@actions/github";
 import * as common from "../../common/common";
+
+type WebhookPayload = typeof context.payload;
 
 interface Options {
   client: common.ClientType;

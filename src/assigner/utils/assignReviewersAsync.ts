@@ -1,8 +1,10 @@
-import type { WebhookPayload } from "@actions/github/lib/interfaces";
+import { context } from "@actions/github";
 import type { Config } from "../config";
 import type { AssignReviewersReturn } from "../types";
 import { setReviewersAsync } from "./setReviewersAsync";
 import * as common from "../../common/common";
+
+type WebhookPayload = typeof context.payload;
 
 interface Options {
   client: common.ClientType;
