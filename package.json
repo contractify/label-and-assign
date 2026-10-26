@@ -26,13 +26,12 @@
     "@actions/core": "^3.0.1",
     "@actions/github": "^9.1.1",
     "js-yaml": "^5.5.0",
-    "minimatch": "^5.1.2",
+    "minimatch": "^10.2.6",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
-    "@types/minimatch": "^5.1.2",
     "@types/node": "^26.6.5",
     "@vercel/ncc": "^0.45.0",
     "jest": "^30.5.2",
